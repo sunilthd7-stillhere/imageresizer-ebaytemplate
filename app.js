@@ -728,9 +728,6 @@ window.onload = () => {
 // BRAND CONFIGURATION
 // ============================================================
 
-
-const brandSelect =
-    document.getElementById("brandSelect");
 // ============================================================
 // AUTOMATICALLY LOAD BRAND LOGOS FROM GITHUB
 // ============================================================
