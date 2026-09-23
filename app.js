@@ -719,12 +719,57 @@ window.onload = () => {
 // ============================================================
 
 
-// ------------------------------------------------------------
-// Template elements
-// ------------------------------------------------------------
+// ============================================================
+// EBAY IMAGE TEMPLATE
+// ============================================================
+
+
+// ============================================================
+// BRAND CONFIGURATION
+// ============================================================
+//
+// Add your logo files here.
+//
+// The files themselves go in:
+//
+// assets/brand-logo/
+//
+// Example:
+//
+// assets/brand-logo/john-guest.png
+// assets/brand-logo/honeywell.png
+//
+// ============================================================
+
+const BRAND_LOGOS = {
+
+    "John Guest":
+        "assets/brand-logo/john-guest.png",
+
+    "Honeywell":
+        "assets/brand-logo/honeywell.png",
+
+    "Speedfit":
+        "assets/brand-logo/speedfit.png",
+
+    "Hepworth":
+        "assets/brand-logo/hepworth.png",
+
+    "Santon":
+        "assets/brand-logo/santon.png"
+
+};
+
+
+// ============================================================
+// ELEMENTS
+// ============================================================
 
 const templateUrls =
     document.getElementById("templateUrls");
+
+const brandSelect =
+    document.getElementById("brandSelect");
 
 const templatePasteBtn =
     document.getElementById("templatePasteBtn");
@@ -738,6 +783,17 @@ const templatePreviewBtn =
 const templateDownloadBtn =
     document.getElementById("templateDownloadBtn");
 
+const templatePrevBtn =
+    document.getElementById("templatePrevBtn");
+
+const templateNextBtn =
+    document.getElementById("templateNextBtn");
+
+const templatePreviewCounter =
+    document.getElementById(
+        "templatePreviewCounter"
+    );
+
 const templateQuality =
     document.getElementById("templateQuality");
 
@@ -748,46 +804,56 @@ const templateCtx =
     templateCanvas.getContext("2d");
 
 const templateImageCount =
-    document.getElementById("templateImageCount");
+    document.getElementById(
+        "templateImageCount"
+    );
 
 const templateProcessed =
-    document.getElementById("templateProcessed");
+    document.getElementById(
+        "templateProcessed"
+    );
 
 const templateTotal =
-    document.getElementById("templateTotal");
+    document.getElementById(
+        "templateTotal"
+    );
 
 const templateFailed =
-    document.getElementById("templateFailed");
+    document.getElementById(
+        "templateFailed"
+    );
 
 const templateProgressFill =
-    document.getElementById("templateProgressFill");
+    document.getElementById(
+        "templateProgressFill"
+    );
 
 const templateStatus =
-    document.getElementById("templateStatus");
+    document.getElementById(
+        "templateStatus"
+    );
 
 const templateFailedUrls =
-    document.getElementById("templateFailedUrls");
+    document.getElementById(
+        "templateFailedUrls"
+    );
 
 const templateCopyFailed =
-    document.getElementById("templateCopyFailed");
+    document.getElementById(
+        "templateCopyFailed"
+    );
 
 
-// ------------------------------------------------------------
-// Template dimensions
-// ------------------------------------------------------------
+// ============================================================
+// TEMPLATE DIMENSIONS
+// ============================================================
 
 const TEMPLATE_WIDTH = 1500;
 
 const TEMPLATE_HEIGHT = 1500;
 
 
-// Product area from your supplied frame
-//
-// X = 189
-// Y = 189
-// Width = 1122
-// Height = 1122
-// ------------------------------------------------------------
+// Product area
 
 const PRODUCT_X = 189;
 
@@ -798,9 +864,29 @@ const PRODUCT_WIDTH = 1122;
 const PRODUCT_HEIGHT = 1122;
 
 
-// ------------------------------------------------------------
-// Background image
-// ------------------------------------------------------------
+// ============================================================
+// BRAND LOGO AREA
+// ============================================================
+//
+// This is the area occupied by the John Guest logo
+// in your supplied background.
+//
+// Adjust these numbers if another brand needs a
+// slightly different position.
+// ============================================================
+
+const LOGO_X = 60;
+
+const LOGO_Y = 5;
+
+const LOGO_WIDTH = 540;
+
+const LOGO_HEIGHT = 130;
+
+
+// ============================================================
+// BACKGROUND
+// ============================================================
 
 const templateBackground =
     new Image();
@@ -809,169 +895,228 @@ templateBackground.src =
     "assets/background-frame.jpg";
 
 
-// ------------------------------------------------------------
-// Get template URLs
-// ------------------------------------------------------------
+// ============================================================
+// CURRENT PREVIEW
+// ============================================================
+
+let templatePreviewIndex = 0;
+
+
+// ============================================================
+// LOAD BRAND DROPDOWN
+// ============================================================
+
+function loadBrandDropdown() {
+
+    brandSelect.innerHTML =
+        '<option value="">Select Brand</option>';
+
+
+    Object.keys(BRAND_LOGOS)
+        .forEach(function(brand) {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                brand;
+
+            option.textContent =
+                brand;
+
+            brandSelect.appendChild(
+                option
+            );
+
+        });
+
+}
+
+
+// ============================================================
+// LOAD BRAND LOGO
+// ============================================================
+
+function loadBrandLogo() {
+
+    return new Promise(
+        function(resolve) {
+
+            const brand =
+                brandSelect.value;
+
+
+            if (!brand) {
+
+                resolve(null);
+
+                return;
+
+            }
+
+
+            const logo =
+                new Image();
+
+
+            logo.onload =
+                function() {
+
+                    resolve(logo);
+
+                };
+
+
+            logo.onerror =
+                function() {
+
+                    console.error(
+                        "Brand logo failed:",
+                        BRAND_LOGOS[brand]
+                    );
+
+                    resolve(null);
+
+                };
+
+
+            logo.src =
+                BRAND_LOGOS[brand];
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// GET TEMPLATE URLS
+// ============================================================
 
 function getTemplateUrls() {
 
     let text =
         templateUrls.value;
 
-    // Spaces
-    text = text.replace(/[ \t]+/g, "\n");
 
-    // Commas
-    text = text.replace(/,/g, "\n");
+    // Spaces become new lines
+
+    text =
+        text.replace(
+            /[ \t]+/g,
+            "\n"
+        );
+
+
+    // Commas become new lines
+
+    text =
+        text.replace(
+            /,/g,
+            "\n"
+        );
+
 
     let urls =
         text
             .split(/\r?\n/)
-            .map(url => url.trim())
-            .filter(url => url.length);
+            .map(
+                function(url) {
+
+                    return url.trim();
+
+                }
+            )
+            .filter(
+                function(url) {
+
+                    return url.length > 0;
+
+                }
+            );
+
 
     // Remove duplicates
-    urls = [...new Set(urls)];
+
+    urls =
+        [...new Set(urls)];
+
 
     return urls;
 
 }
 
 
-// ------------------------------------------------------------
-// Update template count
-// ------------------------------------------------------------
+// ============================================================
+// UPDATE COUNT
+// ============================================================
 
 function updateTemplateCount() {
 
     const urls =
         getTemplateUrls();
 
+
     templateImageCount.innerText =
         urls.length;
+
+
+    templatePreviewCounter.innerText =
+        urls.length
+            ? (
+                templatePreviewIndex + 1
+            ) +
+            " / " +
+            urls.length
+            : "0 / 0";
+
+
+    updatePreviewButtons();
 
 }
 
 
-// ------------------------------------------------------------
-// Paste handling
-// ------------------------------------------------------------
+// ============================================================
+// PREVIEW BUTTONS
+// ============================================================
 
-templateUrls.addEventListener(
-    "paste",
-    function(e) {
+function updatePreviewButtons() {
 
-        e.preventDefault();
+    const urls =
+        getTemplateUrls();
 
-        let text =
-            (e.clipboardData ||
-             window.clipboardData)
-            .getData("text");
 
-        text =
-            text
-                .replace(/[,\t ]+/g, "\n")
-                .replace(/\n+/g, "\n")
-                .trim();
+    if (!urls.length) {
 
-        const start =
-            this.selectionStart;
+        templatePrevBtn.disabled =
+            true;
 
-        const end =
-            this.selectionEnd;
+        templateNextBtn.disabled =
+            true;
 
-        this.value =
-            this.value.substring(0, start) +
-            text +
-            this.value.substring(end);
-
-        this.selectionStart =
-        this.selectionEnd =
-            start + text.length;
-
-        updateTemplateCount();
+        return;
 
     }
-);
 
 
-// ------------------------------------------------------------
-// Clipboard button
-// ------------------------------------------------------------
-
-templatePasteBtn.onclick =
-    async function() {
-
-        try {
-
-            const text =
-                await navigator.clipboard.readText();
-
-            const cleanText =
-                text
-                    .replace(/[,\t ]+/g, "\n")
-                    .replace(/\n+/g, "\n")
-                    .trim();
-
-            templateUrls.value +=
-                (templateUrls.value ? "\n" : "") +
-                cleanText;
-
-            updateTemplateCount();
-
-        }
-        catch(error) {
-
-            alert(
-                "Clipboard permission denied."
-            );
-
-        }
-
-    };
+    templatePrevBtn.disabled =
+        templatePreviewIndex <= 0;
 
 
-// ------------------------------------------------------------
-// Clear
-// ------------------------------------------------------------
+    templateNextBtn.disabled =
+        templatePreviewIndex >=
+        urls.length - 1;
 
-templateClearBtn.onclick =
-    function() {
-
-        templateUrls.value = "";
-
-        templateFailedUrls.value = "";
-
-        templateImageCount.innerText = "0";
-
-        templateProcessed.innerText = "0";
-
-        templateTotal.innerText = "0";
-
-        templateFailed.innerText = "0";
-
-        templateProgressFill.style.width = "0%";
-
-        templateStatus.innerText =
-            "Waiting...";
-
-        drawTemplateBackground();
-
-    };
+}
 
 
-// ------------------------------------------------------------
-// Template image URL
-// ------------------------------------------------------------
+// ============================================================
+// STORE IMAGE URL
+// ============================================================
 
 function getTemplateImageUrl(url) {
-
-    /*
-     * StoreFeeder Azure images do not provide CORS.
-     *
-     * Use weserv as an image proxy so the browser
-     * can read the image.
-     */
 
     if (
         url.includes(
@@ -982,32 +1127,38 @@ function getTemplateImageUrl(url) {
         return (
             "https://images.weserv.nl/?url=" +
             encodeURIComponent(
-                url.replace(/^https?:\/\//, "")
+                url.replace(
+                    /^https?:\/\//,
+                    ""
+                )
             ) +
             "&output=jpg&q=100"
         );
 
     }
 
+
     return url;
 
 }
 
 
-// ------------------------------------------------------------
-// Load image
-// ------------------------------------------------------------
+// ============================================================
+// LOAD PRODUCT IMAGE
+// ============================================================
 
 function loadTemplateImage(url) {
 
     return new Promise(
-        (resolve, reject) => {
+        function(resolve, reject) {
 
             const img =
                 new Image();
 
+
             img.crossOrigin =
                 "anonymous";
+
 
             img.onload =
                 function() {
@@ -1015,6 +1166,7 @@ function loadTemplateImage(url) {
                     resolve(img);
 
                 };
+
 
             img.onerror =
                 function() {
@@ -1027,8 +1179,11 @@ function loadTemplateImage(url) {
 
                 };
 
+
             img.src =
-                getTemplateImageUrl(url);
+                getTemplateImageUrl(
+                    url
+                );
 
         }
     );
@@ -1036,27 +1191,28 @@ function loadTemplateImage(url) {
 }
 
 
-// ------------------------------------------------------------
-// Draw background
-// ------------------------------------------------------------
+// ============================================================
+// DRAW BACKGROUND + BRAND LOGO
+// ============================================================
 
-function drawTemplateBackground() {
+async function drawTemplateBackground() {
 
     if (
         !templateBackground.complete ||
         !templateBackground.naturalWidth
     ) {
 
-        templateBackground.onload =
-            function() {
+        await new Promise(
+            function(resolve) {
 
-                drawTemplateBackground();
+                templateBackground.onload =
+                    resolve;
 
-            };
-
-        return;
+            }
+        );
 
     }
+
 
     templateCtx.clearRect(
         0,
@@ -1064,6 +1220,9 @@ function drawTemplateBackground() {
         TEMPLATE_WIDTH,
         TEMPLATE_HEIGHT
     );
+
+
+    // Background
 
     templateCtx.drawImage(
         templateBackground,
@@ -1073,21 +1232,79 @@ function drawTemplateBackground() {
         TEMPLATE_HEIGHT
     );
 
+
+    // Brand logo
+
+    const logo =
+        await loadBrandLogo();
+
+
+    if (!logo) {
+
+        return;
+
+    }
+
+
+    const scale =
+        Math.min(
+            LOGO_WIDTH /
+                logo.naturalWidth,
+
+            LOGO_HEIGHT /
+                logo.naturalHeight
+        );
+
+
+    const width =
+        logo.naturalWidth *
+        scale;
+
+
+    const height =
+        logo.naturalHeight *
+        scale;
+
+
+    const x =
+        LOGO_X +
+        (
+            LOGO_WIDTH -
+            width
+        ) / 2;
+
+
+    const y =
+        LOGO_Y +
+        (
+            LOGO_HEIGHT -
+            height
+        ) / 2;
+
+
+    templateCtx.drawImage(
+        logo,
+        x,
+        y,
+        width,
+        height
+    );
+
 }
 
 
-// ------------------------------------------------------------
-// Draw product image
-// ------------------------------------------------------------
+// ============================================================
+// CREATE EBAY TEMPLATE
+// ============================================================
 
 async function createEbayTemplate(
     productUrl,
     quality = 0.95
 ) {
 
-    // Draw frame first
+    // Draw background and logo
 
-    drawTemplateBackground();
+    await drawTemplateBackground();
 
 
     // Load product
@@ -1100,6 +1317,7 @@ async function createEbayTemplate(
 
     const sourceWidth =
         img.naturalWidth;
+
 
     const sourceHeight =
         img.naturalHeight;
@@ -1117,48 +1335,59 @@ async function createEbayTemplate(
     }
 
 
-    // --------------------------------------------
-    // Calculate contain dimensions
-    // --------------------------------------------
+    // ========================================================
+    // CONTAIN
+    // ========================================================
 
     const scale =
         Math.min(
-            PRODUCT_WIDTH / sourceWidth,
-            PRODUCT_HEIGHT / sourceHeight
+            PRODUCT_WIDTH /
+                sourceWidth,
+
+            PRODUCT_HEIGHT /
+                sourceHeight
         );
 
 
     const drawWidth =
         Math.round(
-            sourceWidth * scale
+            sourceWidth *
+            scale
         );
 
 
     const drawHeight =
         Math.round(
-            sourceHeight * scale
+            sourceHeight *
+            scale
         );
 
 
-    // Centre inside product area
+    // Centre product
 
     const drawX =
         PRODUCT_X +
         Math.round(
-            (PRODUCT_WIDTH - drawWidth) / 2
+            (
+                PRODUCT_WIDTH -
+                drawWidth
+            ) / 2
         );
 
 
     const drawY =
         PRODUCT_Y +
         Math.round(
-            (PRODUCT_HEIGHT - drawHeight) / 2
+            (
+                PRODUCT_HEIGHT -
+                drawHeight
+            ) / 2
         );
 
 
-    // --------------------------------------------
-    // Draw product
-    // --------------------------------------------
+    // ========================================================
+    // DRAW
+    // ========================================================
 
     templateCtx.imageSmoothingEnabled =
         true;
@@ -1182,12 +1411,12 @@ async function createEbayTemplate(
     );
 
 
-    // --------------------------------------------
-    // Convert to JPEG
-    // --------------------------------------------
+    // ========================================================
+    // JPEG
+    // ========================================================
 
     return new Promise(
-        (resolve, reject) => {
+        function(resolve, reject) {
 
             templateCanvas.toBlob(
                 function(blob) {
@@ -1204,11 +1433,15 @@ async function createEbayTemplate(
 
                     }
 
+
                     resolve(blob);
 
                 },
+
                 "image/jpeg",
+
                 quality
+
             );
 
         }
@@ -1217,9 +1450,9 @@ async function createEbayTemplate(
 }
 
 
-// ------------------------------------------------------------
-// Filename
-// ------------------------------------------------------------
+// ============================================================
+// FILENAME
+// ============================================================
 
 function getTemplateFilename(
     url,
@@ -1230,6 +1463,7 @@ function getTemplateFilename(
 
         const parsed =
             new URL(url);
+
 
         let filename =
             parsed.searchParams.get(
@@ -1244,11 +1478,13 @@ function getTemplateFilename(
                     filename
                 );
 
+
             filename =
                 filename.replace(
                     /\.[^/.]+$/,
                     ""
                 );
+
 
             return (
                 filename +
@@ -1272,6 +1508,7 @@ function getTemplateFilename(
                     ""
                 );
 
+
             return (
                 path +
                 "_ebay.jpg"
@@ -1287,23 +1524,394 @@ function getTemplateFilename(
 
     return (
         "image_" +
-        String(index + 1)
-            .padStart(4, "0") +
+        String(
+            index + 1
+        ).padStart(
+            4,
+            "0"
+        ) +
         "_ebay.jpg"
     );
 
 }
 
 
-// ------------------------------------------------------------
-// Preview
-// ------------------------------------------------------------
+// ============================================================
+// PREVIEW CURRENT IMAGE
+// ============================================================
+
+async function showTemplatePreview() {
+
+    const urls =
+        getTemplateUrls();
+
+
+    if (!urls.length) {
+
+        templatePreviewCounter.innerText =
+            "0 / 0";
+
+        updatePreviewButtons();
+
+        return;
+
+    }
+
+
+    if (
+        templatePreviewIndex < 0
+    ) {
+
+        templatePreviewIndex = 0;
+
+    }
+
+
+    if (
+        templatePreviewIndex >=
+        urls.length
+    ) {
+
+        templatePreviewIndex =
+            urls.length - 1;
+
+    }
+
+
+    templatePreviewCounter.innerText =
+        (
+            templatePreviewIndex + 1
+        ) +
+        " / " +
+        urls.length;
+
+
+    updatePreviewButtons();
+
+
+    templateStatus.innerText =
+        "Loading preview " +
+        (
+            templatePreviewIndex + 1
+        ) +
+        " of " +
+        urls.length +
+        "...";
+
+
+    try {
+
+        await createEbayTemplate(
+            urls[
+                templatePreviewIndex
+            ],
+            parseFloat(
+                templateQuality.value
+            )
+        );
+
+
+        templateStatus.innerText =
+            "Preview " +
+            (
+                templatePreviewIndex + 1
+            ) +
+            " of " +
+            urls.length;
+
+    }
+    catch(error) {
+
+        console.error(error);
+
+
+        templateStatus.innerText =
+            "Preview failed.";
+
+
+        alert(
+            "Unable to load this image."
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// PREVIOUS
+// ============================================================
+
+templatePrevBtn.onclick =
+    async function() {
+
+        if (
+            templatePreviewIndex <= 0
+        ) {
+
+            return;
+
+        }
+
+
+        templatePreviewIndex--;
+
+
+        await showTemplatePreview();
+
+    };
+
+
+// ============================================================
+// NEXT
+// ============================================================
+
+templateNextBtn.onclick =
+    async function() {
+
+        const urls =
+            getTemplateUrls();
+
+
+        if (
+            templatePreviewIndex >=
+            urls.length - 1
+        ) {
+
+            return;
+
+        }
+
+
+        templatePreviewIndex++;
+
+
+        await showTemplatePreview();
+
+    };
+
+
+// ============================================================
+// PASTE
+// ============================================================
+
+templateUrls.addEventListener(
+    "paste",
+    function(e) {
+
+        e.preventDefault();
+
+
+        let text =
+            (
+                e.clipboardData ||
+                window.clipboardData
+            ).getData("text");
+
+
+        text =
+            text
+                .replace(
+                    /[,\t ]+/g,
+                    "\n"
+                )
+                .replace(
+                    /\n+/g,
+                    "\n"
+                )
+                .trim();
+
+
+        const start =
+            this.selectionStart;
+
+
+        const end =
+            this.selectionEnd;
+
+
+        this.value =
+            this.value.substring(
+                0,
+                start
+            ) +
+            text +
+            this.value.substring(
+                end
+            );
+
+
+        this.selectionStart =
+        this.selectionEnd =
+            start +
+            text.length;
+
+
+        templatePreviewIndex = 0;
+
+
+        updateTemplateCount();
+
+    }
+);
+
+
+// ============================================================
+// PASTE CLIPBOARD
+// ============================================================
+
+templatePasteBtn.onclick =
+    async function() {
+
+        try {
+
+            const text =
+                await navigator
+                    .clipboard
+                    .readText();
+
+
+            const cleanText =
+                text
+                    .replace(
+                        /[,\t ]+/g,
+                        "\n"
+                    )
+                    .replace(
+                        /\n+/g,
+                        "\n"
+                    )
+                    .trim();
+
+
+            templateUrls.value +=
+                (
+                    templateUrls.value
+                    ? "\n"
+                    : ""
+                ) +
+                cleanText;
+
+
+            templatePreviewIndex = 0;
+
+
+            updateTemplateCount();
+
+        }
+        catch(error) {
+
+            alert(
+                "Clipboard permission denied."
+            );
+
+        }
+
+    };
+
+
+// ============================================================
+// TEXTAREA INPUT
+// ============================================================
+
+templateUrls.addEventListener(
+    "input",
+    function() {
+
+        templatePreviewIndex = 0;
+
+        updateTemplateCount();
+
+    }
+);
+
+
+// ============================================================
+// BRAND CHANGE
+// ============================================================
+
+brandSelect.addEventListener(
+    "change",
+    async function() {
+
+        const urls =
+            getTemplateUrls();
+
+
+        if (urls.length) {
+
+            await showTemplatePreview();
+
+        }
+        else {
+
+            await drawTemplateBackground();
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// CLEAR
+// ============================================================
+
+templateClearBtn.onclick =
+    function() {
+
+        templateUrls.value =
+            "";
+
+        templateFailedUrls.value =
+            "";
+
+        templatePreviewIndex =
+            0;
+
+
+        templateImageCount.innerText =
+            "0";
+
+
+        templateProcessed.innerText =
+            "0";
+
+
+        templateTotal.innerText =
+            "0";
+
+
+        templateFailed.innerText =
+            "0";
+
+
+        templateProgressFill.style.width =
+            "0%";
+
+
+        templateStatus.innerText =
+            "Waiting...";
+
+
+        updateTemplateCount();
+
+
+        drawTemplateBackground();
+
+    };
+
+
+// ============================================================
+// PREVIEW BUTTON
+// ============================================================
 
 templatePreviewBtn.onclick =
     async function() {
 
         const urls =
             getTemplateUrls();
+
 
         if (!urls.length) {
 
@@ -1315,49 +1923,44 @@ templatePreviewBtn.onclick =
 
         }
 
+
+        if (!brandSelect.value) {
+
+            alert(
+                "Please select a brand first."
+            );
+
+            return;
+
+        }
+
+
+        templatePreviewIndex =
+            0;
+
+
         templatePreviewBtn.disabled =
             true;
-
-        templateStatus.innerText =
-            "Creating preview...";
 
 
         try {
 
-            await createEbayTemplate(
-                urls[0],
-                parseFloat(
-                    templateQuality.value
-                )
-            );
-
-            templateStatus.innerText =
-                "Preview created.";
+            await showTemplatePreview();
 
         }
-        catch(error) {
+        finally {
 
-            console.error(error);
-
-            templateStatus.innerText =
-                "Preview failed.";
-
-            alert(
-                "Unable to load the image."
-            );
+            templatePreviewBtn.disabled =
+                false;
 
         }
-
-
-        templatePreviewBtn.disabled =
-            false;
 
     };
 
 
-// ------------------------------------------------------------
-// Download ZIP
-// ------------------------------------------------------------
+// ============================================================
+// DOWNLOAD ZIP
+// ============================================================
 
 templateDownloadBtn.onclick =
     async function() {
@@ -1365,10 +1968,22 @@ templateDownloadBtn.onclick =
         const urls =
             getTemplateUrls();
 
+
         if (!urls.length) {
 
             alert(
                 "Please paste product image URLs first."
+            );
+
+            return;
+
+        }
+
+
+        if (!brandSelect.value) {
+
+            alert(
+                "Please select a brand first."
             );
 
             return;
@@ -1388,18 +2003,28 @@ templateDownloadBtn.onclick =
         templatePasteBtn.disabled =
             true;
 
+        templatePrevBtn.disabled =
+            true;
+
+        templateNextBtn.disabled =
+            true;
+
 
         templateFailedUrls.value =
             "";
 
+
         templateProcessed.innerText =
             "0";
+
 
         templateTotal.innerText =
             urls.length;
 
+
         templateFailed.innerText =
             "0";
+
 
         templateProgressFill.style.width =
             "0%";
@@ -1432,7 +2057,9 @@ templateDownloadBtn.onclick =
 
             templateStatus.innerText =
                 "Processing " +
-                (i + 1) +
+                (
+                    i + 1
+                ) +
                 " of " +
                 urls.length;
 
@@ -1497,7 +2124,8 @@ templateDownloadBtn.onclick =
 
 
             templateProgressFill.style.width =
-                percent + "%";
+                percent +
+                "%";
 
         }
 
@@ -1529,11 +2157,17 @@ templateDownloadBtn.onclick =
             "-" +
             String(
                 date.getMonth() + 1
-            ).padStart(2, "0") +
+            ).padStart(
+                2,
+                "0"
+            ) +
             "-" +
             String(
                 date.getDate()
-            ).padStart(2, "0");
+            ).padStart(
+                2,
+                "0"
+            );
 
 
         saveAs(
@@ -1546,7 +2180,9 @@ templateDownloadBtn.onclick =
 
         templateStatus.innerText =
             "Finished. " +
-            (processed - failed) +
+            (
+                processed - failed
+            ) +
             " created, " +
             failed +
             " failed.";
@@ -1564,12 +2200,15 @@ templateDownloadBtn.onclick =
         templatePasteBtn.disabled =
             false;
 
+
+        updatePreviewButtons();
+
     };
 
 
-// ------------------------------------------------------------
-// Copy failed URLs
-// ------------------------------------------------------------
+// ============================================================
+// COPY FAILED
+// ============================================================
 
 templateCopyFailed.onclick =
     async function() {
@@ -1583,9 +2222,11 @@ templateCopyFailed.onclick =
         }
 
 
-        await navigator.clipboard.writeText(
-            templateFailedUrls.value
-        );
+        await navigator
+            .clipboard
+            .writeText(
+                templateFailedUrls.value
+            );
 
 
         templateStatus.innerText =
@@ -1594,87 +2235,27 @@ templateCopyFailed.onclick =
     };
 
 
-// ------------------------------------------------------------
-// Count URLs
-// ------------------------------------------------------------
+// ============================================================
+// BRAND DROPDOWN INIT
+// ============================================================
 
-templateUrls.addEventListener(
-    "input",
-    updateTemplateCount
-);
+loadBrandDropdown();
 
 
-// ------------------------------------------------------------
-// Tabs
-// ------------------------------------------------------------
-
-document
-    .querySelectorAll(".tabButton")
-    .forEach(function(button) {
-
-        button.addEventListener(
-            "click",
-            function() {
-
-                const tabId =
-                    this.dataset.tab;
-
-
-                document
-                    .querySelectorAll(
-                        ".tabButton"
-                    )
-                    .forEach(function(btn) {
-
-                        btn.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                document
-                    .querySelectorAll(
-                        ".tabContent"
-                    )
-                    .forEach(function(tab) {
-
-                        tab.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                this.classList.add(
-                    "active"
-                );
-
-
-                document
-                    .getElementById(tabId)
-                    .classList.add(
-                        "active"
-                    );
-
-            }
-        );
-
-    });
-
-
-// ------------------------------------------------------------
-// Initialise template preview
-// ------------------------------------------------------------
+// ============================================================
+// INITIAL BACKGROUND
+// ============================================================
 
 templateBackground.onload =
-    function() {
+    async function() {
 
-        drawTemplateBackground();
+        await drawTemplateBackground();
 
     };
 
 
-// Initial count
+// ============================================================
+// INITIAL COUNT
+// ============================================================
 
 updateTemplateCount();
