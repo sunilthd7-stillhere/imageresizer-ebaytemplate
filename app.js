@@ -727,39 +727,108 @@ window.onload = () => {
 // ============================================================
 // BRAND CONFIGURATION
 // ============================================================
-//
-// Add your logo files here.
-//
-// The files themselves go in:
-//
-// assets/brand-logo/
-//
-// Example:
-//
-// assets/brand-logo/john-guest.png
-// assets/brand-logo/honeywell.png
-//
+
+
+const brandSelect =
+    document.getElementById("brandSelect");
+// ============================================================
+// AUTOMATICALLY LOAD BRAND LOGOS FROM GITHUB
 // ============================================================
 
-const BRAND_LOGOS = {
+const GITHUB_BRAND_API =
+    "https://api.github.com/repos/" +
+    "sunilthd7-stillhere/" +
+    "imageresizer-ebaytemplate/" +
+    "contents/assets/brand-logo";
 
-    "John Guest":
-        "assets/brand-logo/john-guest.png",
 
-    "Honeywell":
-        "assets/brand-logo/honeywell.png",
+let BRAND_LOGOS = {};
 
-    "Speedfit":
-        "assets/brand-logo/speedfit.png",
 
-    "Hepworth":
-        "assets/brand-logo/hepworth.png",
+// ============================================================
+// LOAD ALL BRAND LOGOS
+// ============================================================
 
-    "Santon":
-        "assets/brand-logo/santon.png"
+async function loadBrandLogo() {
 
-};
+    return new Promise(
+        function(resolve) {
 
+            const brand =
+                brandSelect.value;
+
+            if (!brand) {
+                resolve(null);
+                return;
+            }
+
+            const logo =
+                new Image();
+
+            logo.onload =
+                function() {
+                    resolve(logo);
+                };
+
+            logo.onerror =
+                function() {
+                    resolve(null);
+                };
+
+            logo.src =
+                BRAND_LOGOS[brand];
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// CREATE BRAND NAME FROM FILENAME
+// ============================================================
+
+function getBrandNameFromFilename(
+    filename
+) {
+
+    // Remove extension
+
+    let name =
+        filename.replace(
+            /\.[^/.]+$/,
+            ""
+        );
+
+
+    // Replace separators
+
+    name =
+        name.replace(
+            /[-_]+/g,
+            " "
+        );
+
+
+    // Convert to title case
+
+    name =
+        name.replace(
+            /\w\S*/g,
+            function(word) {
+
+                return word.charAt(0)
+                    .toUpperCase() +
+                    word.substring(1)
+                        .toLowerCase();
+
+            }
+        );
+
+
+    return name.trim();
+
+}
 
 // ============================================================
 // ELEMENTS
@@ -900,39 +969,6 @@ templateBackground.src =
 // ============================================================
 
 let templatePreviewIndex = 0;
-
-
-// ============================================================
-// LOAD BRAND DROPDOWN
-// ============================================================
-
-function loadBrandDropdown() {
-
-    brandSelect.innerHTML =
-        '<option value="">Select Brand</option>';
-
-
-    Object.keys(BRAND_LOGOS)
-        .forEach(function(brand) {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                brand;
-
-            option.textContent =
-                brand;
-
-            brandSelect.appendChild(
-                option
-            );
-
-        });
-
-}
 
 
 // ============================================================
@@ -2235,11 +2271,6 @@ templateCopyFailed.onclick =
     };
 
 
-// ============================================================
-// BRAND DROPDOWN INIT
-// ============================================================
-
-loadBrandDropdown();
 
 
 // ============================================================
@@ -2260,6 +2291,11 @@ templateBackground.onload =
 
 updateTemplateCount();
 
+// ============================================================
+// BRAND DROPDOWN INIT
+// ============================================================
+
+loadBrandLogos();
 
 // ============================================================
 // TAB SYSTEM WITH URL PARAMETER
