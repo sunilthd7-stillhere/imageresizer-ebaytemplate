@@ -1246,7 +1246,7 @@ const PRODUCT_HEIGHT = 1122;
 
 const LOGO_X = 60;
 
-const LOGO_Y = 5;
+const LOGO_Y = 20;
 
 const LOGO_WIDTH = 540;
 
