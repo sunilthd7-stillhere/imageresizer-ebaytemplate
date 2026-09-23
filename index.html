@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<link rel="icon" type="image/x-icon" href="favicon.ico.png">
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>SP Bulk Image Resizer</title>
+<title>Image Tools</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -19,133 +19,326 @@
 
 <div class="container">
 
-<h1>🖼 Bulk Image Resizer</h1>
-<p>
-Image will resize to 1500 x 1500px
-</p>
-<p>
-Paste image URLs below.
-Spaces, commas and new lines are all accepted.
-</p>
+    <h1>🖼 Image Tools</h1>
 
-<textarea
-id="urls"
-placeholder="Paste image URLs here..."></textarea>
+    <!-- ========================================= -->
+    <!-- TABS -->
+    <!-- ========================================= -->
 
-<div class="buttons">
+    <div class="tabs">
 
-<button id="pasteBtn">
-📋 Paste Clipboard
-</button>
+        <button
+            class="tabButton active"
+            data-tab="resizeTab">
+            Resize Image
+        </button>
 
-<button id="clearBtn">
-🗑 Clear
-</button>
+        <button
+            class="tabButton"
+            data-tab="ebayTab">
+            eBay Image Template
+        </button>
 
-<button id="downloadBtn">
-⬇ Download ZIP
-</button>
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RESIZE IMAGE TAB -->
+    <!-- ========================================= -->
+
+    <div id="resizeTab" class="tabContent active">
+
+        <h2>Resize Images</h2>
+
+        <p>
+            Paste image URLs below. Spaces, commas, tabs and
+            new lines are accepted.
+        </p>
+
+        <textarea
+            id="urls"
+            placeholder="Paste image URLs here..."></textarea>
+
+        <div class="buttons">
+
+            <button id="pasteBtn">
+                📋 Paste Clipboard
+            </button>
+
+            <button id="clearBtn">
+                🗑 Clear
+            </button>
+
+            <button id="downloadBtn">
+                ⬇ Download ZIP
+            </button>
+
+        </div>
+
+        <div class="options">
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    id="removeDuplicates"
+                    checked>
+
+                Remove duplicate URLs
+
+            </label>
+
+        </div>
+
+        <div class="progress">
+
+            <div class="progressHeader">
+
+                <div>
+                    Images:
+                    <span id="imageCount">0</span>
+                </div>
+
+                <div>
+                    Downloaded:
+                    <span id="downloaded">0</span>
+                    /
+                    <span id="total">0</span>
+                </div>
+
+                <div>
+                    Failed:
+                    <span id="failed">0</span>
+                </div>
+
+            </div>
+
+            <div class="progressBar">
+
+                <div id="progressFill"></div>
+
+            </div>
+
+            <div id="status">
+                Waiting...
+            </div>
+
+        </div>
+
+        <div class="failedContainer">
+
+            <h3>Failed URLs</h3>
+
+            <textarea
+                id="failedUrls"
+                readonly></textarea>
+
+            <button id="copyFailed">
+                Copy Failed URLs
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- EBAY TEMPLATE TAB -->
+    <!-- ========================================= -->
+
+    <div id="ebayTab" class="tabContent">
+
+        <h2>eBay Image Template</h2>
+
+        <p>
+            Paste product image URLs below. Each image will be
+            placed inside the John Guest / TradeHutDirect template.
+        </p>
+
+        <textarea
+            id="templateUrls"
+            placeholder="Paste product image URLs here..."></textarea>
+
+
+        <div class="buttons">
+
+            <button id="templatePasteBtn">
+                📋 Paste Clipboard
+            </button>
+
+            <button id="templateClearBtn">
+                🗑 Clear
+            </button>
+
+            <button id="templatePreviewBtn">
+                👁 Preview
+            </button>
+
+            <button id="templateDownloadBtn">
+                ⬇ Download ZIP
+            </button>
+
+        </div>
+
+
+        <!-- Template options -->
+
+        <div class="templateOptions">
+
+            <div class="optionBox">
+
+                <label>
+                    Product Area
+                </label>
+
+                <div class="dimensionText">
+                    1122 × 1122 px
+                </div>
+
+            </div>
+
+
+            <div class="optionBox">
+
+                <label>
+                    Output
+                </label>
+
+                <div class="dimensionText">
+                    1500 × 1500 px
+                </div>
+
+            </div>
+
+
+            <div class="optionBox">
+
+                <label>
+                    JPEG Quality
+                </label>
+
+                <select id="templateQuality">
+
+                    <option value="1">
+                        100%
+                    </option>
+
+                    <option value="0.98">
+                        98%
+                    </option>
+
+                    <option
+                        value="0.95"
+                        selected>
+                        95%
+                    </option>
+
+                    <option value="0.90">
+                        90%
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- Preview -->
+
+        <div class="templatePreviewContainer">
+
+            <h3>Preview</h3>
+
+            <div class="previewImageWrapper">
+
+                <canvas
+                    id="templatePreview"
+                    width="1500"
+                    height="1500">
+                </canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- Template Progress -->
+
+        <div class="progress">
+
+            <div class="progressHeader">
+
+                <div>
+                    Images:
+                    <span id="templateImageCount">
+                        0
+                    </span>
+                </div>
+
+                <div>
+                    Processed:
+                    <span id="templateProcessed">
+                        0
+                    </span>
+                    /
+                    <span id="templateTotal">
+                        0
+                    </span>
+                </div>
+
+                <div>
+                    Failed:
+                    <span id="templateFailed">
+                        0
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="progressBar">
+
+                <div
+                    id="templateProgressFill">
+                </div>
+
+            </div>
+
+
+            <div id="templateStatus">
+                Waiting...
+            </div>
+
+        </div>
+
+
+        <!-- Failed Template URLs -->
+
+        <div class="failedContainer">
+
+            <h3>
+                Failed URLs
+            </h3>
+
+            <textarea
+                id="templateFailedUrls"
+                readonly></textarea>
+
+            <button
+                id="templateCopyFailed">
+                Copy Failed URLs
+            </button>
+
+        </div>
+
+    </div>
 
 </div>
 
-<div class="options">
 
-<label>
-
-<input
-type="checkbox"
-id="removeDuplicates"
-checked>
-
-Remove duplicate URLs
-
-</label>
-
-</div>
-
-<div class="progress">
-
-<div class="progressHeader">
-
-<div>
-
-Images
-
-<span id="imageCount">
-0
-</span>
-
-</div>
-
-<div>
-
-Downloaded
-
-<span id="downloaded">
-0
-</span>
-
-/
-
-<span id="total">
-0
-</span>
-
-</div>
-
-<div>
-
-Failed
-
-<span id="failed">
-0
-</span>
-
-</div>
-
-</div>
-
-<div class="progressBar">
-
-<div
-id="progressFill">
-</div>
-
-</div>
-
-<div
-id="status">
-
-Waiting...
-
-</div>
-
-</div>
-
-<div class="failedContainer">
-
-<h3>
-
-Failed URLs
-
-</h3>
-
-<textarea
-id="failedUrls"
-readonly></textarea>
-
-<button
-id="copyFailed">
-
-Copy Failed URLs
-
-</button>
-
-</div>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/piexifjs"></script>
-<script src="https://sunilthd7-stillhere.github.io/imageresizer/app.js"></script>
+<script src="app.js"></script>
 
 </body>
+
 </html>
