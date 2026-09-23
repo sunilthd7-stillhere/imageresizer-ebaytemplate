@@ -2292,7 +2292,7 @@ updateTemplateCount();
 // BRAND DROPDOWN INIT
 // ============================================================
 
-loadBrandLogos();
+loadBrandLogo();
 
 // ============================================================
 // TAB SYSTEM WITH URL PARAMETER
