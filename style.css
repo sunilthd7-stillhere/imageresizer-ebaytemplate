@@ -1,0 +1,294 @@
+*{
+    box-sizing:border-box;
+}
+
+body{
+
+    margin:0;
+    padding:40px;
+
+    background:#f4f6f8;
+
+    font-family:Segoe UI,Arial,sans-serif;
+
+    color:#333;
+
+}
+
+.container{
+
+    max-width:1100px;
+
+    margin:auto;
+
+    background:#fff;
+
+    padding:30px;
+
+    border-radius:10px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+
+}
+
+h1{
+
+    margin-top:0;
+
+    color:#1976d2;
+
+}
+
+p{
+
+    color:#666;
+
+}
+
+textarea{
+
+    width:100%;
+
+    border:1px solid #ccc;
+
+    border-radius:6px;
+
+    resize:vertical;
+
+    padding:12px;
+
+    font-size:14px;
+
+    font-family:Consolas, monospace;
+
+    outline:none;
+
+}
+
+#urls{
+
+    height:320px;
+
+}
+
+#failedUrls{
+
+    height:120px;
+
+    background:#fafafa;
+
+}
+
+.buttons{
+
+    display:flex;
+
+    gap:10px;
+
+    margin-top:20px;
+
+    flex-wrap:wrap;
+
+}
+
+button{
+
+    padding:12px 24px;
+
+    border:none;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    transition:.2s;
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+}
+
+#downloadBtn{
+
+    background:#2196F3;
+
+    color:white;
+
+}
+
+#downloadBtn:hover{
+
+    background:#1976D2;
+
+}
+
+#clearBtn{
+
+    background:#f44336;
+
+    color:white;
+
+}
+
+#clearBtn:hover{
+
+    background:#d32f2f;
+
+}
+
+#pasteBtn{
+
+    background:#43A047;
+
+    color:white;
+
+}
+
+#pasteBtn:hover{
+
+    background:#2E7D32;
+
+}
+
+#copyFailed{
+
+    margin-top:10px;
+
+    background:#607D8B;
+
+    color:white;
+
+}
+
+#copyFailed:hover{
+
+    background:#455A64;
+
+}
+
+.options{
+
+    margin-top:20px;
+
+    margin-bottom:20px;
+
+    font-size:15px;
+
+}
+
+.progress{
+
+    margin-top:30px;
+
+}
+
+.progressHeader{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    flex-wrap:wrap;
+
+    margin-bottom:10px;
+
+    font-weight:bold;
+
+}
+
+.progressBar{
+
+    width:100%;
+
+    height:28px;
+
+    background:#ddd;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+#progressFill{
+
+    width:0%;
+
+    height:100%;
+
+    background:linear-gradient(90deg,#4CAF50,#8BC34A);
+
+    transition:width .25s;
+
+}
+
+#status{
+
+    margin-top:12px;
+
+    font-size:15px;
+
+    color:#555;
+
+}
+
+.failedContainer{
+
+    margin-top:35px;
+
+}
+
+label{
+
+    cursor:pointer;
+
+}
+
+input[type=checkbox]{
+
+    transform:scale(1.2);
+
+    margin-right:8px;
+
+}
+
+@media(max-width:700px){
+
+body{
+
+    padding:15px;
+
+}
+
+.container{
+
+    padding:20px;
+
+}
+
+.buttons{
+
+    flex-direction:column;
+
+}
+
+button{
+
+    width:100%;
+
+}
+
+.progressHeader{
+
+    gap:10px;
+
+    flex-direction:column;
+
+}
+
+}

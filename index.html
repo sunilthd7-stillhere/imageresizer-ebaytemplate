@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/x-icon" href="favicon.ico.png">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>SP Bulk Image Resizer</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🖼 Bulk Image Resizer</h1>
+<p>
+Image will resize to 1500 x 1500px
+</p>
+<p>
+Paste image URLs below.
+Spaces, commas and new lines are all accepted.
+</p>
+
+<textarea
+id="urls"
+placeholder="Paste image URLs here..."></textarea>
+
+<div class="buttons">
+
+<button id="pasteBtn">
+📋 Paste Clipboard
+</button>
+
+<button id="clearBtn">
+🗑 Clear
+</button>
+
+<button id="downloadBtn">
+⬇ Download ZIP
+</button>
+
+</div>
+
+<div class="options">
+
+<label>
+
+<input
+type="checkbox"
+id="removeDuplicates"
+checked>
+
+Remove duplicate URLs
+
+</label>
+
+</div>
+
+<div class="progress">
+
+<div class="progressHeader">
+
+<div>
+
+Images
+
+<span id="imageCount">
+0
+</span>
+
+</div>
+
+<div>
+
+Downloaded
+
+<span id="downloaded">
+0
+</span>
+
+/
+
+<span id="total">
+0
+</span>
+
+</div>
+
+<div>
+
+Failed
+
+<span id="failed">
+0
+</span>
+
+</div>
+
+</div>
+
+<div class="progressBar">
+
+<div
+id="progressFill">
+</div>
+
+</div>
+
+<div
+id="status">
+
+Waiting...
+
+</div>
+
+</div>
+
+<div class="failedContainer">
+
+<h3>
+
+Failed URLs
+
+</h3>
+
+<textarea
+id="failedUrls"
+readonly></textarea>
+
+<button
+id="copyFailed">
+
+Copy Failed URLs
+
+</button>
+
+</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs"></script>
+<script src="https://sunilthd7-stillhere.github.io/imageresizer/app.js"></script>
+
+</body>
+</html>
