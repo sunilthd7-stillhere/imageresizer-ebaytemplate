@@ -292,3 +292,247 @@ button{
 }
 
 }
+
+/* =========================================
+   TABS
+========================================= */
+
+.tabs {
+
+    display:flex;
+
+    gap:5px;
+
+    margin:25px 0 25px;
+
+    border-bottom:1px solid #ddd;
+
+}
+
+.tabButton {
+
+    background:#eee;
+
+    color:#333;
+
+    border-radius:6px 6px 0 0;
+
+    padding:13px 25px;
+
+    border:none;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    font-weight:600;
+
+}
+
+.tabButton:hover {
+
+    transform:none;
+
+    background:#ddd;
+
+}
+
+.tabButton.active {
+
+    background:#2196F3;
+
+    color:#fff;
+
+}
+
+
+/* =========================================
+   TAB CONTENT
+========================================= */
+
+.tabContent {
+
+    display:none;
+
+}
+
+.tabContent.active {
+
+    display:block;
+
+}
+
+
+/* =========================================
+   TEMPLATE OPTIONS
+========================================= */
+
+.templateOptions {
+
+    display:flex;
+
+    gap:15px;
+
+    flex-wrap:wrap;
+
+    margin-top:20px;
+
+}
+
+.optionBox {
+
+    border:1px solid #ddd;
+
+    border-radius:6px;
+
+    padding:12px 16px;
+
+    background:#fafafa;
+
+    min-width:160px;
+
+}
+
+.optionBox label {
+
+    display:block;
+
+    font-size:13px;
+
+    color:#666;
+
+    margin-bottom:6px;
+
+}
+
+.dimensionText {
+
+    font-weight:bold;
+
+}
+
+.optionBox select {
+
+    padding:6px;
+
+    border:1px solid #ccc;
+
+    border-radius:4px;
+
+}
+
+
+/* =========================================
+   TEMPLATE PREVIEW
+========================================= */
+
+.templatePreviewContainer {
+
+    margin-top:30px;
+
+}
+
+.previewImageWrapper {
+
+    width:100%;
+
+    max-width:650px;
+
+    margin:auto;
+
+    background:#eee;
+
+    padding:10px;
+
+    border-radius:8px;
+
+}
+
+#templatePreview {
+
+    display:block;
+
+    width:100%;
+
+    height:auto;
+
+}
+
+
+/* =========================================
+   TEMPLATE PROGRESS
+========================================= */
+
+#templateProgressFill {
+
+    width:0%;
+
+    height:100%;
+
+    background:linear-gradient(
+        90deg,
+        #2196F3,
+        #03A9F4
+    );
+
+    transition:width .25s;
+
+}
+
+
+/* =========================================
+   TEMPLATE BUTTON
+========================================= */
+
+#templateDownloadBtn {
+
+    background:#2196F3;
+
+    color:white;
+
+}
+
+#templatePreviewBtn {
+
+    background:#795548;
+
+    color:white;
+
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media(max-width:700px) {
+
+    .tabs {
+
+        flex-direction:column;
+
+        border:none;
+
+    }
+
+    .tabButton {
+
+        width:100%;
+
+        border-radius:6px;
+
+    }
+
+    .templateOptions {
+
+        flex-direction:column;
+
+    }
+
+    .optionBox {
+
+        width:100%;
+
+    }
+
+}
