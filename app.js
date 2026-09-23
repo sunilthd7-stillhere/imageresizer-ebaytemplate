@@ -2259,3 +2259,201 @@ templateBackground.onload =
 // ============================================================
 
 updateTemplateCount();
+
+
+// ============================================================
+// TAB SYSTEM WITH URL PARAMETER
+// ============================================================
+
+const tabButtons =
+    document.querySelectorAll(
+        ".tabButton"
+    );
+
+const tabContents =
+    document.querySelectorAll(
+        ".tabContent"
+    );
+
+
+function activateTab(
+    tabId,
+    updateUrl = true
+) {
+
+    // Remove active
+
+    tabButtons.forEach(
+        function(button) {
+
+            button.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    tabContents.forEach(
+        function(tab) {
+
+            tab.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    // Activate selected
+
+    const button =
+        document.querySelector(
+            '.tabButton[data-tab="' +
+            tabId +
+            '"]'
+        );
+
+
+    const tab =
+        document.getElementById(
+            tabId
+        );
+
+
+    if (!button || !tab) {
+
+        return;
+
+    }
+
+
+    button.classList.add(
+        "active"
+    );
+
+
+    tab.classList.add(
+        "active"
+    );
+
+
+    // Update URL
+
+    if (updateUrl) {
+
+        const url =
+            new URL(
+                window.location.href
+            );
+
+
+        if (
+            tabId === "resizeTab"
+        ) {
+
+            url.searchParams.set(
+                "tab",
+                "resize"
+            );
+
+        }
+        else if (
+            tabId === "ebayTab"
+        ) {
+
+            url.searchParams.set(
+                "tab",
+                "ebay"
+            );
+
+        }
+
+
+        window.history.pushState(
+            {},
+            "",
+            url
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// TAB CLICK
+// ============================================================
+
+tabButtons.forEach(
+    function(button) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                activateTab(
+                    this.dataset.tab,
+                    true
+                );
+
+            }
+        );
+
+    }
+);
+
+
+// ============================================================
+// BACK / FORWARD BUTTON
+// ============================================================
+
+window.addEventListener(
+    "popstate",
+    function() {
+
+        activateTab(
+            getTabFromUrl(),
+            false
+        );
+
+    }
+);
+
+
+// ============================================================
+// GET TAB FROM URL
+// ============================================================
+
+function getTabFromUrl() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    const tab =
+        params.get("tab");
+
+
+    if (tab === "ebay") {
+
+        return "ebayTab";
+
+    }
+
+
+    return "resizeTab";
+
+}
+
+
+// ============================================================
+// INITIAL TAB
+// ============================================================
+
+activateTab(
+    getTabFromUrl(),
+    false
+);
