@@ -732,21 +732,298 @@ window.onload = () => {
 // AUTOMATICALLY LOAD BRAND LOGOS FROM GITHUB
 // ============================================================
 
+// ============================================================
+// AUTOMATIC BRAND LOGOS FROM GITHUB
+// ============================================================
+
 const GITHUB_BRAND_API =
     "https://api.github.com/repos/" +
     "sunilthd7-stillhere/" +
     "imageresizer-ebaytemplate/" +
     "contents/assets/brand-logo";
 
-
 let BRAND_LOGOS = {};
 
 
 // ============================================================
-// LOAD ALL BRAND LOGOS
+// LOAD ALL BRAND LOGOS FROM GITHUB FOLDER
 // ============================================================
 
-async function loadBrandLogo() {
+async function loadBrandLogos() {
+
+    brandSelect.innerHTML =
+        '<option value="">Loading brands...</option>';
+
+    brandSelect.disabled = true;
+
+    try {
+
+        console.log(
+            "Loading brand logos from:",
+            GITHUB_BRAND_API
+        );
+
+        const response =
+            await fetch(
+                GITHUB_BRAND_API,
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "GitHub API HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const files =
+            await response.json();
+
+
+        console.log(
+            "GitHub folder contents:",
+            files
+        );
+
+
+        if (!Array.isArray(files)) {
+
+            throw new Error(
+                "GitHub API did not return a folder list."
+            );
+
+        }
+
+
+        BRAND_LOGOS = {};
+
+
+        // Only image files
+        const imageFiles =
+            files.filter(
+                function(file) {
+
+                    return (
+                        file.type === "file" &&
+                        /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(
+                            file.name
+                        )
+                    );
+
+                }
+            );
+
+
+        // Sort alphabetically
+        imageFiles.sort(
+            function(a, b) {
+
+                return a.name.localeCompare(
+                    b.name,
+                    undefined,
+                    {
+                        numeric: true,
+                        sensitivity: "base"
+                    }
+                );
+
+            }
+        );
+
+
+        // ====================================================
+        // CREATE BRAND LIST
+        // ====================================================
+
+        imageFiles.forEach(
+            function(file) {
+
+                const brandName =
+                    getBrandNameFromFilename(
+                        file.name
+                    );
+
+
+                // Use GitHub Pages URL rather than
+                // githubusercontent download URL.
+                //
+                // This keeps the logo on the same
+                // origin as your website and is better
+                // for drawing it onto canvas.
+
+                const logoUrl =
+                    new URL(
+                        file.path,
+                        document.baseURI
+                    ).href;
+
+
+                BRAND_LOGOS[brandName] =
+                    logoUrl;
+
+
+                console.log(
+                    "Brand:",
+                    brandName,
+                    "Logo:",
+                    logoUrl
+                );
+
+            }
+        );
+
+
+        // ====================================================
+        // FILL DROPDOWN
+        // ====================================================
+
+        brandSelect.innerHTML =
+            '<option value="">Select Brand</option>';
+
+
+        Object.keys(BRAND_LOGOS).forEach(
+            function(brandName) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    brandName;
+
+
+                option.textContent =
+                    brandName;
+
+
+                brandSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        // ====================================================
+        // RESULT
+        // ====================================================
+
+        if (!imageFiles.length) {
+
+            brandSelect.innerHTML =
+                '<option value="">No brand logos found</option>';
+
+            brandSelect.disabled = true;
+
+            console.warn(
+                "No image files found in assets/brand-logo"
+            );
+
+            return;
+
+        }
+
+
+        brandSelect.disabled = false;
+
+
+        console.log(
+            "Loaded " +
+            imageFiles.length +
+            " brand logos."
+        );
+
+
+        // Draw background again now that
+        // the brand list has loaded.
+        await drawTemplateBackground();
+
+    }
+    catch(error) {
+
+        console.error(
+            "Unable to load brand logos:",
+            error
+        );
+
+
+        brandSelect.innerHTML =
+            '<option value="">Unable to load brands</option>';
+
+
+        brandSelect.disabled = true;
+
+
+        if (templateStatus) {
+
+            templateStatus.innerText =
+                "Unable to load brand logos.";
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// CREATE BRAND NAME FROM FILENAME
+// ============================================================
+
+function getBrandNameFromFilename(filename) {
+
+    // Remove extension
+
+    let name =
+        filename.replace(
+            /\.[^/.]+$/,
+            ""
+        );
+
+
+    // Replace - and _ with spaces
+
+    name =
+        name.replace(
+            /[-_]+/g,
+            " "
+        );
+
+
+    // Convert to title case
+
+    name =
+        name.replace(
+            /\w\S*/g,
+            function(word) {
+
+                return (
+                    word.charAt(0).toUpperCase() +
+                    word.substring(1).toLowerCase()
+                );
+
+            }
+        );
+
+
+    return name.trim();
+
+}
+
+
+// ============================================================
+// LOAD SELECTED BRAND LOGO
+// ============================================================
+
+function loadBrandLogo() {
 
     return new Promise(
         function(resolve) {
@@ -754,23 +1031,44 @@ async function loadBrandLogo() {
             const brand =
                 brandSelect.value;
 
+
             if (!brand) {
+
                 resolve(null);
+
                 return;
+
             }
+
 
             const logo =
                 new Image();
 
+
+            logo.crossOrigin =
+                "anonymous";
+
+
             logo.onload =
                 function() {
+
                     resolve(logo);
+
                 };
+
 
             logo.onerror =
                 function() {
+
+                    console.error(
+                        "Brand logo failed:",
+                        BRAND_LOGOS[brand]
+                    );
+
                     resolve(null);
+
                 };
+
 
             logo.src =
                 BRAND_LOGOS[brand];
@@ -779,6 +1077,7 @@ async function loadBrandLogo() {
     );
 
 }
+
 
 
 // ============================================================
@@ -909,7 +1208,11 @@ const templateCopyFailed =
         "templateCopyFailed"
     );
 
+// ============================================================
+// BRAND DROPDOWN INIT
+// ============================================================
 
+loadBrandLogos();
 // ============================================================
 // TEMPLATE DIMENSIONS
 // ============================================================
@@ -966,62 +1269,6 @@ templateBackground.src =
 // ============================================================
 
 let templatePreviewIndex = 0;
-
-
-// ============================================================
-// LOAD BRAND LOGO
-// ============================================================
-
-function loadBrandLogo() {
-
-    return new Promise(
-        function(resolve) {
-
-            const brand =
-                brandSelect.value;
-
-
-            if (!brand) {
-
-                resolve(null);
-
-                return;
-
-            }
-
-
-            const logo =
-                new Image();
-
-
-            logo.onload =
-                function() {
-
-                    resolve(logo);
-
-                };
-
-
-            logo.onerror =
-                function() {
-
-                    console.error(
-                        "Brand logo failed:",
-                        BRAND_LOGOS[brand]
-                    );
-
-                    resolve(null);
-
-                };
-
-
-            logo.src =
-                BRAND_LOGOS[brand];
-
-        }
-    );
-
-}
 
 
 // ============================================================
@@ -2292,7 +2539,7 @@ updateTemplateCount();
 // BRAND DROPDOWN INIT
 // ============================================================
 
-loadBrandLogo();
+//loadBrandLogos();
 
 // ============================================================
 // TAB SYSTEM WITH URL PARAMETER
