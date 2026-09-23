@@ -536,3 +536,159 @@ button{
     }
 
 }
+/* =========================================
+   EBAY BRAND SELECTOR
+========================================= */
+
+.brandSelector {
+
+    margin:20px 0;
+
+    max-width:400px;
+
+}
+
+.brandSelector label {
+
+    display:block;
+
+    font-weight:600;
+
+    margin-bottom:7px;
+
+}
+
+#brandSelect {
+
+    width:100%;
+
+    padding:11px 12px;
+
+    border:1px solid #ccc;
+
+    border-radius:6px;
+
+    background:#fff;
+
+    font-size:15px;
+
+}
+
+
+/* =========================================
+   LARGER URL TEXTAREA
+========================================= */
+
+.templateUrlTextarea {
+
+    width:100%;
+
+    min-height:260px;
+
+    resize:vertical;
+
+    font-family:Arial, sans-serif;
+
+    font-size:14px;
+
+    line-height:1.5;
+
+    padding:14px;
+
+    box-sizing:border-box;
+
+}
+
+
+/* =========================================
+   PREVIEW CONTROLS
+========================================= */
+
+.previewControls {
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:20px;
+
+    margin-top:15px;
+
+}
+
+
+.previewControls button {
+
+    padding:10px 20px;
+
+    border:none;
+
+    border-radius:6px;
+
+    background:#2196F3;
+
+    color:#fff;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+
+.previewControls button:hover:not(:disabled) {
+
+    background:#1976D2;
+
+}
+
+
+.previewControls button:disabled {
+
+    opacity:.45;
+
+    cursor:not-allowed;
+
+}
+
+
+#templatePreviewCounter {
+
+    min-width:70px;
+
+    text-align:center;
+
+    font-weight:600;
+
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media(max-width:700px) {
+
+    .previewControls {
+
+        gap:10px;
+
+    }
+
+    .previewControls button {
+
+        padding:9px 12px;
+
+    }
+
+    .templateUrlTextarea {
+
+        min-height:300px;
+
+    }
+
+}
