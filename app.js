@@ -27,7 +27,13 @@ const CONFIG = {
         width: 1500,
         height: 1500,
         product: { x: 189, y: 189, w: 1122, h: 1122 },
-        logo: { x: 60, y: 5, w: 540, h: 130 }
+        logo: { x: 60, y: 20, w: 540, h: 130 }
+    },
+
+    // Multi-image template (variation listing main image)
+    multi: {
+        gap: 24,          // space between images (px)
+        maxImages: 15     // first image big + up to 14 around it
     },
 
     // Hosts that block direct browser downloads (CORS) - always use the proxy.
@@ -947,6 +953,7 @@ const E = {
     counter: $("templatePreviewCounter"),
     quality: $("templateQuality"),
     removeWhite: $("templateRemoveWhite"),
+    mode: $("templateMode"),
     canvas: $("templatePreview"),
     count: $("templateImageCount"),
     processed: $("templateProcessed"),
@@ -1005,7 +1012,106 @@ function getPreviewImage(url) {
     return previewImageCache.get(url);
 }
 
-function drawTemplate(ctx, background, logo, product) {
+function isMultiMode() {
+    return E.mode.value === "multi";
+}
+
+/* ------------------------------------------------------------
+   MULTI-IMAGE LAYOUT
+   First image big (top-left), the rest in cells around it:
+     2-4 images : big image left, small images stacked on the right
+     5+ images  : big image top-left, small images down the right
+                  side and along the bottom (L shape)
+   Every image gets its own box with a gap, so nothing overlaps.
+   ------------------------------------------------------------ */
+function collageLayout(count, area) {
+
+    const gap = CONFIG.multi.gap;
+    const others = count - 1;
+
+    if (others <= 0) {
+        return [area];
+    }
+
+    const boxes = [];
+
+    // 2 - 4 images: one column on the right
+    if (others <= 3) {
+
+        const cell = Math.floor((area.h - gap * 2) / 3);
+        const mainW = area.w - cell - gap;
+
+        boxes.push({ x: area.x, y: area.y, w: mainW, h: area.h });
+
+        const columnH = others * cell + (others - 1) * gap;
+        let y = area.y + Math.round((area.h - columnH) / 2);
+
+        for (let i = 0; i < others; i++) {
+            boxes.push({ x: area.x + mainW + gap, y: y, w: cell, h: cell });
+            y += cell + gap;
+        }
+
+        return boxes;
+    }
+
+    // 5+ images: grid of g x g cells, big image takes (g-1) x (g-1)
+    const g = Math.max(3, Math.ceil((others + 1) / 2));
+    const cellW = (area.w - gap * (g - 1)) / g;
+    const cellH = (area.h - gap * (g - 1)) / g;
+
+    function cellBox(col, row, offsetX) {
+        return {
+            x: Math.round(area.x + (offsetX || 0) + col * (cellW + gap)),
+            y: Math.round(area.y + row * (cellH + gap)),
+            w: Math.floor(cellW),
+            h: Math.floor(cellH)
+        };
+    }
+
+    // Big image
+    boxes.push({
+        x: area.x,
+        y: area.y,
+        w: Math.floor((g - 1) * cellW + (g - 2) * gap),
+        h: Math.floor((g - 1) * cellH + (g - 2) * gap)
+    });
+
+    // Right column, top to bottom
+    for (let row = 0; row < g && boxes.length < count; row++) {
+        boxes.push(cellBox(g - 1, row));
+    }
+
+    // Bottom row, centred under the big image
+    const remaining = count - boxes.length;
+    const offsetX = ((g - 1) - remaining) * (cellW + gap) / 2;
+
+    for (let col = 0; col < remaining; col++) {
+        boxes.push(cellBox(col, g - 1, offsetX));
+    }
+
+    return boxes;
+}
+
+function drawProduct(ctx, img, box) {
+
+    if (E.removeWhite.checked) {
+
+        // "Multiply" blend: white in the product photo becomes see-through,
+        // so the frame / badges behind it are not covered by a white box.
+        ctx.save();
+        ctx.globalCompositeOperation = "multiply";
+        drawContain(ctx, img, box, false);
+        ctx.restore();
+
+    } else {
+
+        // Normal: product drawn on a white box
+        drawContain(ctx, img, box, true);
+    }
+}
+
+/* products: array of images (1 = single layout, 2+ = multi layout) */
+function drawTemplate(ctx, background, logo, products) {
 
     const T = CONFIG.template;
 
@@ -1022,24 +1128,17 @@ function drawTemplate(ctx, background, logo, product) {
         drawContain(ctx, logo, T.logo, false);
     }
 
-    if (product) {
+    const list = products || [];
 
-        if (E.removeWhite.checked) {
-
-            // "Multiply" blend: white in the product photo becomes see-through,
-            // so the frame / badges behind it are not covered by a white box.
-            // Transparent PNG / GIF areas also show the frame.
-            ctx.save();
-            ctx.globalCompositeOperation = "multiply";
-            drawContain(ctx, product, T.product, false);
-            ctx.restore();
-
-        } else {
-
-            // Normal: product drawn on a white box
-            drawContain(ctx, product, T.product, true);
-        }
+    if (!list.length) {
+        return;
     }
+
+    const boxes = collageLayout(list.length, T.product);
+
+    list.forEach(function(img, i) {
+        drawProduct(ctx, img, boxes[i]);
+    });
 }
 
 function getTemplateUrls() {
@@ -1055,6 +1154,20 @@ function updateTemplateCount() {
     }
 
     E.count.textContent = urls.length;
+
+    if (isMultiMode()) {
+
+        const used = Math.min(urls.length, CONFIG.multi.maxImages);
+
+        E.counter.textContent = used
+            ? used + " in 1 image"
+            : "0 / 0";
+
+        E.prev.disabled = true;
+        E.next.disabled = true;
+        return;
+    }
+
     E.counter.textContent = urls.length
         ? (previewIndex + 1) + " / " + urls.length
         : "0 / 0";
@@ -1096,23 +1209,64 @@ async function showPreview() {
     }
 
     const seq = ++previewSeq;
-    const url = urls[previewIndex];
-
-    setStatus(E.status,
-        "Loading preview " + (previewIndex + 1) + " of " + urls.length + "...");
 
     try {
 
-        const parts = await Promise.all([
+        const frame = await Promise.all([
             getBackground(),
-            getLogo(E.brand.value),
-            getPreviewImage(url)
+            getLogo(E.brand.value)
         ]);
+
+        // ---------- MULTI: all images in one template ----------
+        if (isMultiMode()) {
+
+            const list = urls.slice(0, CONFIG.multi.maxImages);
+
+            setStatus(E.status, "Loading " + list.length + " images...");
+
+            const results = await Promise.all(list.map(function(url) {
+                return getPreviewImage(url).then(
+                    function(img) { return { img: img }; },
+                    function(e) { return { url: url, error: e }; }
+                );
+            }));
+
+            if (seq !== previewSeq) return;
+
+            const images = results.filter(function(r) { return r.img; })
+                .map(function(r) { return r.img; });
+
+            const failed = results.filter(function(r) { return r.error; });
+
+            drawTemplate(previewCtx, frame[0], frame[1], images);
+
+            let message = "Preview: " + images.length + " images in one template";
+
+            if (urls.length > list.length) {
+                message += "\nOnly the first " + list.length + " URLs are used.";
+            }
+
+            if (failed.length) {
+                message += "\n" + failed.length + " could not load:\n" +
+                    failed.map(function(f) { return f.url; }).join("\n");
+            }
+
+            setStatus(E.status, message, failed.length ? "error" : "");
+            return;
+        }
+
+        // ---------- SINGLE: one product per template ----------
+        const url = urls[previewIndex];
+
+        setStatus(E.status,
+            "Loading preview " + (previewIndex + 1) + " of " + urls.length + "...");
+
+        const product = await getPreviewImage(url);
 
         // A newer preview was requested while this one was loading
         if (seq !== previewSeq) return;
 
-        drawTemplate(previewCtx, parts[0], parts[1], parts[2]);
+        drawTemplate(previewCtx, frame[0], frame[1], [product]);
 
         setStatus(E.status,
             "Preview " + (previewIndex + 1) + " of " + urls.length);
@@ -1123,7 +1277,7 @@ async function showPreview() {
 
         console.error(e);
 
-        setStatus(E.status, "Preview failed: " + e.message + "\n" + url, "error");
+        setStatus(E.status, "Preview failed: " + e.message, "error");
     }
 }
 
@@ -1134,6 +1288,7 @@ function setTemplateBusy(busy) {
     E.clear.disabled = busy;
     E.paste.disabled = busy;
     E.removeWhite.disabled = busy;
+    E.mode.disabled = busy;
     E.brand.disabled = busy || !brands.length;
     updateTemplateCount();
 }
@@ -1196,6 +1351,25 @@ E.paste.addEventListener("click", function() {
     });
 })();
 
+// Single / Multi mode (remembered on this computer)
+function updateModeUi() {
+    E.download.textContent = isMultiMode() ? "⬇ Download JPG" : "⬇ Download ZIP";
+}
+
+(function() {
+    const saved = storageGet(localStorage, "templateMode");
+    if (saved === "single" || saved === "multi") {
+        E.mode.value = saved;
+    }
+    updateModeUi();
+    E.mode.addEventListener("change", function() {
+        storageSet(localStorage, "templateMode", E.mode.value);
+        previewIndex = 0;
+        updateModeUi();
+        showPreview();
+    });
+})();
+
 E.brand.addEventListener("change", function() {
     storageSet(localStorage, "lastBrand", E.brand.value);
     showPreview();
@@ -1251,6 +1425,156 @@ E.copyFailed.addEventListener("click", async function() {
     }
 });
 
+async function loadWithRetry(url) {
+    try {
+        return await loadImageFromUrl(url);
+    } catch (e) {
+        return await loadImageFromUrl(url);
+    }
+}
+
+function resetTemplateProgress(total) {
+    E.failedList.value = "";
+    E.processed.textContent = "0";
+    E.total.textContent = total;
+    E.failed.textContent = "0";
+    E.fill.style.width = "0%";
+}
+
+function recordTemplateFailure(failures, url, error) {
+    console.warn("Template failed:", url, error);
+    failures.push(url + "   (" + error.message + ")");
+    E.failed.textContent = failures.length;
+    E.failedList.value = failures.join("\n");
+}
+
+/* MULTI: all URLs -> one JPG (first image big) */
+async function downloadMultiTemplate(urls, background, logo, quality) {
+
+    const list = urls.slice(0, CONFIG.multi.maxImages);
+    const images = new Array(list.length).fill(null);
+    const failures = [];
+
+    let processed = 0;
+
+    resetTemplateProgress(list.length);
+
+    await runPool(list, CONFIG.concurrentDownloads, async function(url, index) {
+
+        try {
+            images[index] = await loadWithRetry(url);
+        } catch (e) {
+            recordTemplateFailure(failures, url, e);
+        }
+
+        processed++;
+        E.processed.textContent = processed;
+        E.fill.style.width = Math.round(processed / list.length * 100) + "%";
+        setStatus(E.status, "Loaded " + processed + " of " + list.length + "...");
+    });
+
+    // Keep the original order - first working image is the big one
+    const loaded = images.filter(Boolean);
+
+    if (!loaded.length) {
+        setStatus(E.status, "No images could be loaded, so nothing was created.", "error");
+        return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = CONFIG.template.width;
+    canvas.height = CONFIG.template.height;
+
+    drawTemplate(canvas.getContext("2d"), background, logo, loaded);
+
+    // Show the same result in the preview
+    previewSeq++;
+    previewCtx.drawImage(canvas, 0, 0);
+
+    const blob = await canvasToDpiJpeg(canvas, quality);
+
+    loaded.forEach(function(img) { if (img.close) img.close(); });
+
+    const firstUrl = list[images.indexOf(loaded[0])];
+
+    downloadBlob(blob, baseNameFromUrl(firstUrl, 0) + "_ebay_multi.jpg");
+
+    let message = "Finished. 1 image created with " + loaded.length + " products";
+
+    if (failures.length) message += ", " + failures.length + " failed";
+    if (urls.length > list.length) message += "\nOnly the first " + list.length + " URLs were used.";
+
+    setStatus(E.status, message + ".", failures.length ? "" : "ok");
+}
+
+/* SINGLE: one JPG per URL, all in a ZIP */
+async function downloadSingleTemplates(urls, background, logo, quality, brandName) {
+
+    if (typeof JSZip === "undefined") {
+        alert("JSZip did not load. Please refresh the page.");
+        return;
+    }
+
+    const names = makeUniqueNames(urls, "_ebay");
+    const zip = new JSZip();
+    const failures = [];
+
+    let processed = 0;
+    let succeeded = 0;
+
+    resetTemplateProgress(urls.length);
+
+    await runPool(urls, CONFIG.concurrentDownloads, async function(url, index) {
+
+        try {
+
+            const product = await loadWithRetry(url);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = CONFIG.template.width;
+            canvas.height = CONFIG.template.height;
+
+            drawTemplate(canvas.getContext("2d"), background, logo, [product]);
+
+            if (product.close) product.close();
+
+            zip.file(names[index], await canvasToDpiJpeg(canvas, quality));
+
+            succeeded++;
+
+        } catch (e) {
+            recordTemplateFailure(failures, url, e);
+        }
+
+        processed++;
+        E.processed.textContent = processed;
+        E.fill.style.width = Math.round(processed / urls.length * 100) + "%";
+        setStatus(E.status, "Processed " + processed + " of " + urls.length + "...");
+    });
+
+    if (!succeeded) {
+        setStatus(E.status,
+            "No images could be processed, so no ZIP was created.\n" +
+            "See the Failed URLs box below for the reason.", "error");
+        return;
+    }
+
+    setStatus(E.status, "Creating ZIP...");
+
+    const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 }
+    });
+
+    downloadBlob(zipBlob,
+        "ebay_" + brandSlug(brandName).toLowerCase() + "_" + todayString() + ".zip");
+
+    setStatus(E.status,
+        "Finished. " + succeeded + " created, " + failures.length + " failed.",
+        failures.length ? "" : "ok");
+}
+
 E.download.addEventListener("click", async function() {
 
     if (templateBusy) return;
@@ -1267,109 +1591,25 @@ E.download.addEventListener("click", async function() {
         return;
     }
 
-    if (typeof JSZip === "undefined") {
-        alert("JSZip did not load. Please refresh the page.");
-        return;
-    }
-
     setTemplateBusy(true);
-
-    E.failedList.value = "";
-    E.processed.textContent = "0";
-    E.total.textContent = urls.length;
-    E.failed.textContent = "0";
-    E.fill.style.width = "0%";
 
     const brandName = E.brand.value;
     const quality = parseFloat(E.quality.value) || 0.95;
-    const names = makeUniqueNames(urls, "_ebay");
-    const zip = new JSZip();
-    const failures = [];
-
-    let background;
-    let logo;
-
-    try {
-        background = await getBackground();
-        logo = await getLogo(brandName);
-    } catch (e) {
-        setStatus(E.status, e.message, "error");
-        setTemplateBusy(false);
-        return;
-    }
-
-    let processed = 0;
-    let succeeded = 0;
-
-    await runPool(urls, CONFIG.concurrentDownloads, async function(url, index) {
-
-        let lastError = null;
-
-        for (let attempt = 1; attempt <= 2; attempt++) {
-
-            try {
-
-                const product = await loadImageFromUrl(url);
-
-                const canvas = document.createElement("canvas");
-                canvas.width = CONFIG.template.width;
-                canvas.height = CONFIG.template.height;
-
-                drawTemplate(canvas.getContext("2d"), background, logo, product);
-
-                if (product.close) product.close();
-
-                zip.file(names[index], await canvasToDpiJpeg(canvas, quality));
-
-                succeeded++;
-                lastError = null;
-                break;
-
-            } catch (e) {
-                lastError = e;
-            }
-        }
-
-        if (lastError) {
-            console.warn("Template failed:", url, lastError);
-            failures.push(url + "   (" + lastError.message + ")");
-            E.failed.textContent = failures.length;
-            E.failedList.value = failures.join("\n");
-        }
-
-        processed++;
-        E.processed.textContent = processed;
-        E.fill.style.width = Math.round(processed / urls.length * 100) + "%";
-        setStatus(E.status, "Processed " + processed + " of " + urls.length + "...");
-    });
-
-    if (!succeeded) {
-        setStatus(E.status,
-            "No images could be processed, so no ZIP was created.\n" +
-            "See the Failed URLs box below for the reason.", "error");
-        setTemplateBusy(false);
-        return;
-    }
 
     try {
 
-        setStatus(E.status, "Creating ZIP...");
+        const background = await getBackground();
+        const logo = await getLogo(brandName);
 
-        const zipBlob = await zip.generateAsync({
-            type: "blob",
-            compression: "DEFLATE",
-            compressionOptions: { level: 6 }
-        });
-
-        downloadBlob(zipBlob,
-            "ebay_" + brandSlug(brandName).toLowerCase() + "_" + todayString() + ".zip");
-
-        setStatus(E.status,
-            "Finished. " + succeeded + " created, " + failures.length + " failed.",
-            failures.length ? "" : "ok");
+        if (isMultiMode()) {
+            await downloadMultiTemplate(urls, background, logo, quality);
+        } else {
+            await downloadSingleTemplates(urls, background, logo, quality, brandName);
+        }
 
     } catch (e) {
-        setStatus(E.status, "ZIP creation failed: " + e.message, "error");
+        console.error(e);
+        setStatus(E.status, "Failed: " + e.message, "error");
     }
 
     setTemplateBusy(false);

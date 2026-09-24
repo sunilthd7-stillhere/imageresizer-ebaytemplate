@@ -321,6 +321,23 @@ input[type=checkbox] {
     font-size: 15px;
 }
 
+.modeSelector {
+    margin-top: 20px;
+    max-width: 600px;
+}
+
+.modeSelector label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 7px;
+}
+
+.modeSelector select {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 15px;
+}
+
 .templateOptions {
     display: flex;
     gap: 15px;
