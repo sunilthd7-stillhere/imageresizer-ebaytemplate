@@ -27,7 +27,7 @@ const CONFIG = {
         width: 1500,
         height: 1500,
         product: { x: 189, y: 189, w: 1122, h: 1122 },
-        logo: { x: 60, y: 25, w: 540, h: 130 }
+        logo: { x: 60, y: 20, w: 540, h: 130 }
     },
 
     // Hosts that block direct browser downloads (CORS) - always use the proxy.
