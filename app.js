@@ -27,7 +27,7 @@ const CONFIG = {
         width: 1500,
         height: 1500,
         product: { x: 189, y: 189, w: 1122, h: 1122 },
-        logo: { x: 60, y: 20, w: 540, h: 130 }
+        logo: { x: 60, y: 5, w: 540, h: 130 }
     },
 
     // Hosts that block direct browser downloads (CORS) - always use the proxy.
@@ -946,6 +946,7 @@ const E = {
     next: $("templateNextBtn"),
     counter: $("templatePreviewCounter"),
     quality: $("templateQuality"),
+    removeWhite: $("templateRemoveWhite"),
     canvas: $("templatePreview"),
     count: $("templateImageCount"),
     processed: $("templateProcessed"),
@@ -1022,8 +1023,22 @@ function drawTemplate(ctx, background, logo, product) {
     }
 
     if (product) {
-        // whiteBehind = true -> transparent PNG / GIF areas become white
-        drawContain(ctx, product, T.product, true);
+
+        if (E.removeWhite.checked) {
+
+            // "Multiply" blend: white in the product photo becomes see-through,
+            // so the frame / badges behind it are not covered by a white box.
+            // Transparent PNG / GIF areas also show the frame.
+            ctx.save();
+            ctx.globalCompositeOperation = "multiply";
+            drawContain(ctx, product, T.product, false);
+            ctx.restore();
+
+        } else {
+
+            // Normal: product drawn on a white box
+            drawContain(ctx, product, T.product, true);
+        }
     }
 }
 
@@ -1118,6 +1133,7 @@ function setTemplateBusy(busy) {
     E.preview.disabled = busy;
     E.clear.disabled = busy;
     E.paste.disabled = busy;
+    E.removeWhite.disabled = busy;
     E.brand.disabled = busy || !brands.length;
     updateTemplateCount();
 }
@@ -1167,6 +1183,18 @@ E.paste.addEventListener("click", function() {
         updateTemplateCount();
     });
 });
+
+// Remember the "remove white background" choice on this computer
+(function() {
+    const saved = storageGet(localStorage, "templateRemoveWhite");
+    if (saved !== null) {
+        E.removeWhite.checked = saved === "1";
+    }
+    E.removeWhite.addEventListener("change", function() {
+        storageSet(localStorage, "templateRemoveWhite", E.removeWhite.checked ? "1" : "0");
+        showPreview();
+    });
+})();
 
 E.brand.addEventListener("change", function() {
     storageSet(localStorage, "lastBrand", E.brand.value);

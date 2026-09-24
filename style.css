@@ -343,6 +343,15 @@ input[type=checkbox] {
     margin-bottom: 6px;
 }
 
+.optionBox .checkLabel {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+    margin: 0;
+}
+
 .dimensionText {
     font-weight: bold;
 }
