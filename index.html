@@ -1,556 +1,293 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Image Resizer & eBay Template</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<title>Image Tools</title>
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            color: #222;
-        }
+<link rel="stylesheet" href="style.css">
 
-        .container {
-            max-width: 1100px;
-            margin: 30px auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.08);
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-        h1 {
-            margin-top: 0;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 25px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .tab-button {
-            border: 0;
-            background: #eee;
-            padding: 12px 22px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 6px 6px 0 0;
-        }
-
-        .tab-button.active {
-            background: #222;
-            color: #fff;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 7px;
-        }
-
-        textarea,
-        input[type="text"],
-        input[type="password"],
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        textarea {
-            min-height: 220px;
-            resize: vertical;
-        }
-
-        .field {
-            margin-bottom: 18px;
-        }
-
-        button {
-            border: 0;
-            border-radius: 5px;
-            padding: 10px 16px;
-            cursor: pointer;
-            background: #222;
-            color: white;
-        }
-
-        button:hover {
-            opacity: .9;
-        }
-
-        button.secondary {
-            background: #777;
-        }
-
-        button.danger {
-            background: #c62828;
-        }
-
-        button:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f1f1f1;
-            border-radius: 5px;
-            white-space: pre-wrap;
-        }
-
-        .progress {
-            margin-top: 15px;
-            height: 20px;
-            background: #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            width: 0;
-            height: 100%;
-            background: #222;
-            transition: width .2s;
-        }
-
-        .preview-wrapper {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        #templatePreview {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-        }
-
-        .brand-list {
-            margin-top: 20px;
-        }
-
-        .brand-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            background: #fafafa;
-        }
-
-        .brand-row img {
-            width: 150px;
-            height: 60px;
-            object-fit: contain;
-            background: white;
-            border: 1px solid #ddd;
-            padding: 5px;
-        }
-
-        .brand-name {
-            flex: 1;
-            font-weight: bold;
-        }
-
-        .settings-note {
-            background: #fff7d6;
-            border: 1px solid #e4cc70;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .small {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .template-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        @media (max-width: 700px) {
-            .template-controls {
-                grid-template-columns: 1fr;
-            }
-
-            .tabs {
-                flex-wrap: wrap;
-            }
-
-            .brand-row {
-                flex-wrap: wrap;
-            }
-        }
-    </style>
 </head>
 
 <body>
 
 <div class="container">
 
-    <h1>Image Resizer & eBay Template</h1>
+    <h1>🖼 Image Tools</h1>
+
+    <!-- ========================================= -->
+    <!-- TABS -->
+    <!-- ========================================= -->
 
     <div class="tabs">
-
-        <button
-            class="tab-button active"
-            data-tab="resize">
-            Resize Image
-        </button>
-
-        <button
-            class="tab-button"
-            data-tab="ebay">
-            eBay Image Template
-        </button>
-
-        <button
-            class="tab-button"
-            data-tab="settings">
-            Settings
-        </button>
-
+        <button class="tabButton active" data-tab="resizeTab">Resize Image</button>
+        <button class="tabButton" data-tab="ebayTab">eBay Image Template</button>
+        <button class="tabButton" data-tab="settingsTab">Brand Logos</button>
     </div>
 
 
-    <!-- ======================================================
-         RESIZE TAB
-         ====================================================== -->
+    <!-- ========================================= -->
+    <!-- RESIZE IMAGE TAB -->
+    <!-- ========================================= -->
 
-    <div
-        id="resize"
-        class="tab-content active">
+    <div id="resizeTab" class="tabContent active">
 
-        <div class="field">
+        <h2>Resize Images</h2>
+
+        <p>
+            Paste image URLs below. Spaces, commas, tabs and new lines are accepted.
+            Transparent PNG / GIF backgrounds are turned white. Output is JPEG at 300 DPI.
+        </p>
+
+        <textarea id="urls" placeholder="Paste image URLs here..."></textarea>
+
+        <div class="buttons">
+            <button id="pasteBtn">📋 Paste Clipboard</button>
+            <button id="clearBtn">🗑 Clear</button>
+            <button id="downloadBtn">⬇ Download ZIP</button>
+        </div>
+
+        <div class="options">
 
             <label>
-                Image URLs
+                <input type="checkbox" id="removeDuplicates" checked>
+                Remove duplicate URLs
             </label>
 
-            <textarea
-                id="imageUrls"
-                placeholder="Paste one image URL per line"></textarea>
-
-            <div class="small">
-                One image URL per line.
-            </div>
-
-        </div>
-
-
-        <div class="button-row">
-
-            <button id="pasteBtn">
-                Paste
-            </button>
-
-            <button
-                id="clearBtn"
-                class="secondary">
-                Clear
-            </button>
-
-            <button id="resizeBtn">
-                Resize & Download ZIP
-            </button>
+            <label class="inlineSelect">
+                Output size
+                <select id="resizeSize">
+                    <option value="1000">1000 × 1000 px</option>
+                    <option value="1500" selected>1500 × 1500 px</option>
+                    <option value="1600">1600 × 1600 px</option>
+                    <option value="2000">2000 × 2000 px</option>
+                </select>
+            </label>
 
         </div>
-
 
         <div class="progress">
-            <div
-                id="progressFill"
-                class="progress-fill">
+
+            <div class="progressHeader">
+                <div>Images: <span id="imageCount">0</span></div>
+                <div>Downloaded: <span id="downloaded">0</span> / <span id="total">0</span></div>
+                <div>Failed: <span id="failed">0</span></div>
             </div>
+
+            <div class="progressBar"><div id="progressFill"></div></div>
+
+            <div id="status" class="statusText">Waiting...</div>
+
         </div>
 
-
-        <div
-            id="resizeStatus"
-            class="status">
-            Ready.
+        <div class="failedContainer">
+            <h3>Failed URLs</h3>
+            <textarea id="failedUrls" class="failedBox" readonly></textarea>
+            <button id="copyFailed" class="greyBtn">Copy Failed URLs</button>
         </div>
 
     </div>
 
 
-    <!-- ======================================================
-         EBAY TAB
-         ====================================================== -->
+    <!-- ========================================= -->
+    <!-- EBAY IMAGE TEMPLATE TAB -->
+    <!-- ========================================= -->
 
-    <div
-        id="ebay"
-        class="tab-content">
+    <div id="ebayTab" class="tabContent">
 
-        <div class="field">
+        <h2>eBay Image Template</h2>
 
-            <label>
-                Brand
-            </label>
+        <p>
+            Paste product image URLs below. Each image will be placed inside the
+            selected brand template.
+        </p>
 
+        <div class="brandSelector">
+            <label for="brandSelect">Brand</label>
             <select id="brandSelect">
-                <option value="">
-                    Loading brands...
-                </option>
+                <option value="">Loading brands...</option>
             </select>
+        </div>
+
+        <textarea
+            id="templateUrls"
+            class="templateUrlTextarea"
+            placeholder="Paste product image URLs here...
+
+Example:
+https://example.com/image1.jpg
+https://example.com/image2.jpg
+https://example.com/image3.jpg"></textarea>
+
+        <div class="buttons">
+            <button id="templatePasteBtn">📋 Paste Clipboard</button>
+            <button id="templateClearBtn">🗑 Clear</button>
+            <button id="templatePreviewBtn">👁 Preview</button>
+            <button id="templateDownloadBtn">⬇ Download ZIP</button>
+        </div>
+
+        <div class="templateOptions">
+
+            <div class="optionBox">
+                <label>Product Area</label>
+                <div class="dimensionText">1122 × 1122 px</div>
+            </div>
+
+            <div class="optionBox">
+                <label>Output</label>
+                <div class="dimensionText">1500 × 1500 px</div>
+            </div>
+
+            <div class="optionBox">
+                <label for="templateQuality">JPEG Quality</label>
+                <select id="templateQuality">
+                    <option value="1">100%</option>
+                    <option value="0.98">98%</option>
+                    <option value="0.95" selected>95%</option>
+                    <option value="0.90">90%</option>
+                </select>
+            </div>
 
         </div>
 
+        <div class="templatePreviewContainer">
 
-        <div class="field">
+            <h3>Preview</h3>
 
-            <label>
-                Product Image URLs
-            </label>
+            <div class="previewImageWrapper">
+                <canvas id="templatePreview" width="1500" height="1500"></canvas>
+            </div>
 
-            <textarea
-                id="templateUrls"
-                placeholder="One product image URL per line"></textarea>
-
-        </div>
-
-
-        <div class="button-row">
-
-            <button id="templatePasteBtn">
-                Paste
-            </button>
-
-            <button
-                id="templateClearBtn"
-                class="secondary">
-                Clear
-            </button>
-
-            <button id="templatePreviewBtn">
-                Preview
-            </button>
-
-            <button id="templateDownloadBtn">
-                Download
-            </button>
+            <div class="previewControls">
+                <button id="templatePrevBtn" disabled>◀ Previous</button>
+                <span id="templatePreviewCounter">0 / 0</span>
+                <button id="templateNextBtn" disabled>Next ▶</button>
+            </div>
 
         </div>
 
+        <div class="progress">
 
-        <div class="button-row" style="margin-top:15px">
+            <div class="progressHeader">
+                <div>Images: <span id="templateImageCount">0</span></div>
+                <div>Processed: <span id="templateProcessed">0</span> / <span id="templateTotal">0</span></div>
+                <div>Failed: <span id="templateFailed">0</span></div>
+            </div>
 
-            <button
-                id="templatePrevBtn"
-                class="secondary">
-                Previous
-            </button>
+            <div class="progressBar"><div id="templateProgressFill"></div></div>
 
-            <button
-                id="templateNextBtn"
-                class="secondary">
-                Next
-            </button>
-
-            <span
-                id="templatePreviewCounter"
-                style="padding:10px">
-                0 / 0
-            </span>
+            <div id="templateStatus" class="statusText">Waiting...</div>
 
         </div>
 
-
-        <div class="preview-wrapper">
-
-            <canvas
-                id="templatePreview"
-                width="1500"
-                height="1500">
-            </canvas>
-
-        </div>
-
-
-        <div
-            id="templateStatus"
-            class="status">
-            Ready.
+        <div class="failedContainer">
+            <h3>Failed URLs</h3>
+            <textarea id="templateFailedUrls" class="failedBox" readonly></textarea>
+            <button id="templateCopyFailed" class="greyBtn">Copy Failed URLs</button>
         </div>
 
     </div>
 
 
-    <!-- ======================================================
-         SETTINGS TAB
-         ====================================================== -->
+    <!-- ========================================= -->
+    <!-- BRAND LOGOS (SETTINGS) TAB -->
+    <!-- ========================================= -->
 
-    <div
-        id="settings"
-        class="tab-content">
+    <div id="settingsTab" class="tabContent">
 
-        <h2>Brand Logo Settings</h2>
+        <h2>Brand Logos</h2>
 
-        <div class="settings-note">
+        <p>
+            These logos are used by the eBay Image Template.
+        </p>
 
-            <strong>GitHub API access</strong><br>
-
-            A GitHub token is required to upload and delete
-            brand logos.
-
-            <br><br>
-
-            The token entered here is stored only in this
-            browser session and is not included in your
-            JavaScript source code.
-
-            <br><br>
-
-            Use a GitHub fine-grained token with access only
-            to the required repository.
-
+        <div class="settingsToolbar">
+            <span id="brandCountText">Loading...</span>
+            <button id="refreshBrandsBtn" class="greyBtn">↻ Refresh</button>
         </div>
 
-
-        <div class="field">
-
-            <label>
-                GitHub Token
-            </label>
-
-            <input
-                type="password"
-                id="githubToken"
-                placeholder="github_pat_...">
-
-        </div>
+        <div id="brandList" class="brandGrid"></div>
 
 
-        <div class="button-row">
+        <!-- Owner only: hidden until a valid owner token is entered -->
 
-            <button id="saveGithubToken">
-                Save Token
-            </button>
+        <details id="ownerPanel" class="ownerPanel">
 
-            <button
-                id="clearGithubToken"
-                class="secondary">
-                Clear Token
-            </button>
+            <summary>🔒 Owner login</summary>
 
-        </div>
+            <div id="ownerLoggedOut">
 
+                <p class="smallText">
+                    Only the repository owner can add or delete logos.
+                    Paste your GitHub fine-grained token for this repository.
+                    The token stays in this browser only and is checked with GitHub.
+                </p>
 
-        <hr style="margin:30px 0">
+                <input
+                    type="password"
+                    id="githubToken"
+                    class="textInput"
+                    placeholder="github_pat_..."
+                    autocomplete="off"
+                    spellcheck="false">
 
+                <label class="smallText">
+                    <input type="checkbox" id="rememberToken">
+                    Remember on this computer (only tick this on your own PC)
+                </label>
 
-        <h3>
-            Upload Brand Logo
-        </h3>
+                <div class="buttons">
+                    <button id="ownerLoginBtn" class="blueBtn">Unlock</button>
+                </div>
 
+                <div id="ownerStatus" class="statusText"></div>
 
-        <div class="field">
+            </div>
 
-            <label>
-                Brand Name
-            </label>
+            <div id="ownerLoggedIn" hidden>
 
-            <input
-                type="text"
-                id="brandName"
-                placeholder="e.g. John Guest">
+                <div class="ownerBadge">
+                    <span>✅ Signed in as <b id="ownerName"></b></span>
+                    <button id="ownerLogoutBtn" class="greyBtn">Lock</button>
+                </div>
 
-        </div>
+                <h3>Add or replace a logo</h3>
 
+                <div class="formRow">
+                    <label for="brandName">Brand name</label>
+                    <input type="text" id="brandName" class="textInput" placeholder="e.g. John Guest">
+                </div>
 
-        <div class="field">
+                <div class="formRow">
+                    <label for="brandFile">Logo file (PNG, JPG, WEBP or SVG, max 2 MB)</label>
+                    <input type="file" id="brandFile"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif">
+                </div>
 
-            <label>
-                Logo File
-            </label>
+                <img id="brandFilePreview" class="brandFilePreview" alt="" hidden>
 
-            <input
-                type="file"
-                id="brandFile"
-                accept=".png,.jpg,.jpeg,.webp,.gif,.svg,image/*">
+                <div class="buttons">
+                    <button id="uploadBrandBtn" class="blueBtn">⬆ Upload to GitHub</button>
+                </div>
 
-        </div>
+                <div id="brandUploadStatus" class="statusText"></div>
 
+            </div>
 
-        <button id="uploadBrandBtn">
-            Upload Brand Logo
-        </button>
-
-
-        <div
-            id="brandUploadStatus"
-            class="status">
-            Ready.
-        </div>
-
-
-        <hr style="margin:30px 0">
-
-
-        <h3>
-            Existing Brand Logos
-        </h3>
-
-
-        <button
-            id="refreshBrandsBtn"
-            class="secondary">
-            Refresh Brand List
-        </button>
-
-
-        <div
-            id="brandList"
-            class="brand-list">
-            Loading...
-        </div>
+        </details>
 
     </div>
 
 </div>
 
-
-<!-- JSZip -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-<!-- piexif -->
-<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js"></script>
-
 <script src="app.js"></script>
 
 </body>
+
 </html>
