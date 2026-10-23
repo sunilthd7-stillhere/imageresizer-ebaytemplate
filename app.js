@@ -3,8 +3,8 @@
 /* ============================================================
    IMAGE TOOLS
    - Resize Image      : bulk resize to square JPEG, white background, 300 DPI
-   - eBay Template     : product image inside brand frame + logo
-   - Brand Logos       : everyone can view; only the repo owner can upload/delete
+   - eBay Template     : product image(s) placed on a full brand template
+   - Brand Templates   : everyone can view; only the repo owner can upload/delete
    ============================================================ */
 
 
@@ -16,8 +16,8 @@ const CONFIG = {
 
     githubOwner: "sunilthd7-stillhere",
     githubRepo: "imageresizer-ebaytemplate",
-    brandPath: "assets/brand-logo",
-    backgroundFrame: "assets/background-frame.jpg",
+    // Full brand templates (1500 x 1500 with logo, header and footer)
+    brandPath: "assets/brand-template",
 
     dpi: 300,
     resizeQuality: 0.95,
@@ -26,8 +26,13 @@ const CONFIG = {
     template: {
         width: 1500,
         height: 1500,
-        product: { x: 189, y: 189, w: 1122, h: 1122 },
-        logo: { x: 60, y: 20, w: 540, h: 130 }
+
+        // Area between the template header and footer where products go.
+        // Single image: square area in the middle.
+        product: { x: 200, y: 225, w: 1100, h: 1100 },
+
+        // Multi image: uses the full width between header and footer.
+        productMulti: { x: 40, y: 225, w: 1420, h: 1100 }
     },
 
     // Multi-image template (variation listing main image)
@@ -44,7 +49,7 @@ const CONFIG = {
     // Brand list is cached so we stay under GitHub's 60 requests/hour limit.
     brandCacheMinutes: 10,
 
-    maxLogoBytes: 2 * 1024 * 1024
+    maxTemplateBytes: 5 * 1024 * 1024
 };
 
 const GITHUB_API =
@@ -715,15 +720,15 @@ updateResizeCount();
 
 
 /* ============================================================
-   BRAND LOGOS - shared by the eBay tab and the Brand Logos tab
+   BRAND TEMPLATES - shared by the eBay tab and the Brand Templates tab
    ============================================================ */
 
-const BRAND_CACHE_KEY = "brandListCache_v2";
+const BRAND_CACHE_KEY = "brandTemplateCache_v3";
 const TOKEN_KEY = "thd_github_token";
 
 let brands = [];            // [{ name, fileName, path, sha, url, pagesUrl }]
 let ownerLogin = null;      // set when a valid owner token is unlocked
-const logoCache = new Map();
+const templateCache = new Map();
 
 function getToken() {
     return storageGet(sessionStorage, TOKEN_KEY) ||
@@ -881,7 +886,7 @@ async function loadBrands(force) {
         brands = [];
 
         E.brand.innerHTML = '<option value="">Unable to load brands</option>';
-        S.count.textContent = "Unable to load brand logos";
+        S.count.textContent = "Unable to load brand templates";
         S.list.innerHTML = "";
 
         const msg = document.createElement("p");
@@ -895,7 +900,7 @@ function findBrand(name) {
     return brands.find(function(b) { return b.name === name; }) || null;
 }
 
-async function loadLogoImage(brand) {
+async function loadTemplateFile(brand) {
 
     async function fromUrl(url) {
         let blob = await fetchBlob(url);
@@ -913,7 +918,8 @@ async function loadLogoImage(brand) {
     }
 }
 
-function getLogo(brandName) {
+/* The full brand template image for the selected brand */
+function getFrame(brandName) {
 
     const brand = findBrand(brandName);
 
@@ -923,17 +929,17 @@ function getLogo(brandName) {
 
     const key = brand.path + "@" + brand.sha;
 
-    if (!logoCache.has(key)) {
+    if (!templateCache.has(key)) {
 
-        const promise = loadLogoImage(brand).catch(function(e) {
-            logoCache.delete(key);
-            throw new Error("Logo for " + brand.name + " could not be loaded");
+        const promise = loadTemplateFile(brand).catch(function(e) {
+            templateCache.delete(key);
+            throw new Error("Template for " + brand.name + " could not be loaded");
         });
 
-        logoCache.set(key, promise);
+        templateCache.set(key, promise);
     }
 
-    return logoCache.get(key);
+    return templateCache.get(key);
 }
 
 
@@ -970,27 +976,9 @@ const previewCtx = E.canvas.getContext("2d");
 let previewIndex = 0;
 let previewSeq = 0;
 let templateBusy = false;
-let backgroundPromise = null;
 
 // Small cache so switching brand / Previous / Next doesn't re-download
 const previewImageCache = new Map();
-
-function getBackground() {
-
-    if (!backgroundPromise) {
-
-        backgroundPromise = fetchBlob(CONFIG.backgroundFrame)
-            .then(decodeBlob)
-            .catch(function(e) {
-                backgroundPromise = null;
-                throw new Error(
-                    "Background frame not found (" + CONFIG.backgroundFrame + ")"
-                );
-            });
-    }
-
-    return backgroundPromise;
-}
 
 function getPreviewImage(url) {
 
@@ -1111,7 +1099,7 @@ function drawProduct(ctx, img, box) {
 }
 
 /* products: array of images (1 = single layout, 2+ = multi layout) */
-function drawTemplate(ctx, background, logo, products) {
+function drawTemplate(ctx, frame, products) {
 
     const T = CONFIG.template;
 
@@ -1120,12 +1108,8 @@ function drawTemplate(ctx, background, logo, products) {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, T.width, T.height);
 
-    if (background) {
-        ctx.drawImage(background, 0, 0, T.width, T.height);
-    }
-
-    if (logo) {
-        drawContain(ctx, logo, T.logo, false);
+    if (frame) {
+        ctx.drawImage(frame, 0, 0, T.width, T.height);
     }
 
     const list = products || [];
@@ -1134,7 +1118,9 @@ function drawTemplate(ctx, background, logo, products) {
         return;
     }
 
-    const boxes = collageLayout(list.length, T.product);
+    const boxes = list.length === 1
+        ? [T.product]
+        : collageLayout(list.length, T.productMulti);
 
     list.forEach(function(img, i) {
         drawProduct(ctx, img, boxes[i]);
@@ -1176,24 +1162,19 @@ function updateTemplateCount() {
     E.next.disabled = templateBusy || previewIndex >= urls.length - 1;
 }
 
-/* Redraw frame + logo only (no product) */
+/* Draw the template only (no product) */
 async function drawEmptyTemplate() {
 
     const seq = ++previewSeq;
 
-    let background = null;
-    let logo = null;
+    let frame = null;
 
-    try { background = await getBackground(); } catch (e) {
-        setStatus(E.status, e.message, "error");
-    }
-
-    try { logo = await getLogo(E.brand.value); } catch (e) {
+    try { frame = await getFrame(E.brand.value); } catch (e) {
         setStatus(E.status, e.message, "error");
     }
 
     if (seq === previewSeq) {
-        drawTemplate(previewCtx, background, logo, null);
+        drawTemplate(previewCtx, frame, null);
     }
 }
 
@@ -1212,10 +1193,7 @@ async function showPreview() {
 
     try {
 
-        const frame = await Promise.all([
-            getBackground(),
-            getLogo(E.brand.value)
-        ]);
+        const frame = await getFrame(E.brand.value);
 
         // ---------- MULTI: all images in one template ----------
         if (isMultiMode()) {
@@ -1238,7 +1216,7 @@ async function showPreview() {
 
             const failed = results.filter(function(r) { return r.error; });
 
-            drawTemplate(previewCtx, frame[0], frame[1], images);
+            drawTemplate(previewCtx, frame, images);
 
             let message = "Preview: " + images.length + " images in one template";
 
@@ -1266,7 +1244,7 @@ async function showPreview() {
         // A newer preview was requested while this one was loading
         if (seq !== previewSeq) return;
 
-        drawTemplate(previewCtx, frame[0], frame[1], [product]);
+        drawTemplate(previewCtx, frame, [product]);
 
         setStatus(E.status,
             "Preview " + (previewIndex + 1) + " of " + urls.length);
@@ -1300,7 +1278,7 @@ function fillBrandDropdown() {
     E.brand.innerHTML = "";
 
     if (!brands.length) {
-        E.brand.innerHTML = '<option value="">No brand logos found</option>';
+        E.brand.innerHTML = '<option value="">No brand templates yet - add one in the Brand Templates tab</option>';
         E.brand.disabled = true;
         drawEmptyTemplate();
         return;
@@ -1449,7 +1427,7 @@ function recordTemplateFailure(failures, url, error) {
 }
 
 /* MULTI: all URLs -> one JPG (first image big) */
-async function downloadMultiTemplate(urls, background, logo, quality) {
+async function downloadMultiTemplate(urls, frame, quality) {
 
     const list = urls.slice(0, CONFIG.multi.maxImages);
     const images = new Array(list.length).fill(null);
@@ -1485,7 +1463,7 @@ async function downloadMultiTemplate(urls, background, logo, quality) {
     canvas.width = CONFIG.template.width;
     canvas.height = CONFIG.template.height;
 
-    drawTemplate(canvas.getContext("2d"), background, logo, loaded);
+    drawTemplate(canvas.getContext("2d"), frame, loaded);
 
     // Show the same result in the preview
     previewSeq++;
@@ -1508,7 +1486,7 @@ async function downloadMultiTemplate(urls, background, logo, quality) {
 }
 
 /* SINGLE: one JPG per URL, all in a ZIP */
-async function downloadSingleTemplates(urls, background, logo, quality, brandName) {
+async function downloadSingleTemplates(urls, frame, quality, brandName) {
 
     if (typeof JSZip === "undefined") {
         alert("JSZip did not load. Please refresh the page.");
@@ -1534,7 +1512,7 @@ async function downloadSingleTemplates(urls, background, logo, quality, brandNam
             canvas.width = CONFIG.template.width;
             canvas.height = CONFIG.template.height;
 
-            drawTemplate(canvas.getContext("2d"), background, logo, [product]);
+            drawTemplate(canvas.getContext("2d"), frame, [product]);
 
             if (product.close) product.close();
 
@@ -1598,13 +1576,16 @@ E.download.addEventListener("click", async function() {
 
     try {
 
-        const background = await getBackground();
-        const logo = await getLogo(brandName);
+        const frame = await getFrame(brandName);
+
+        if (!frame) {
+            throw new Error("Brand template could not be loaded.");
+        }
 
         if (isMultiMode()) {
-            await downloadMultiTemplate(urls, background, logo, quality);
+            await downloadMultiTemplate(urls, frame, quality);
         } else {
-            await downloadSingleTemplates(urls, background, logo, quality, brandName);
+            await downloadSingleTemplates(urls, frame, quality, brandName);
         }
 
     } catch (e) {
@@ -1619,7 +1600,7 @@ updateTemplateCount();
 
 
 /* ============================================================
-   BRAND LOGOS TAB
+   BRAND TEMPLATES TAB
    Everyone: view the list.
    Owner only: upload / replace / delete (needs your GitHub token,
    and the token must belong to CONFIG.githubOwner).
@@ -1650,12 +1631,12 @@ function renderBrandList(note) {
     S.list.innerHTML = "";
 
     S.count.textContent =
-        brands.length + " brand logo" + (brands.length === 1 ? "" : "s") +
+        brands.length + " brand template" + (brands.length === 1 ? "" : "s") +
         (note ? "  •  " + note : "");
 
     if (!brands.length) {
         const p = document.createElement("p");
-        p.textContent = "No brand logos found in " + CONFIG.brandPath + ".";
+        p.textContent = "No brand templates yet in " + CONFIG.brandPath + ". The owner can add one below.";
         S.list.appendChild(p);
         return;
     }
@@ -1747,7 +1728,7 @@ async function verifyOwnerToken(token) {
 
         throw new Error(
             "This token belongs to \"" + user.login + "\". " +
-            "Only " + CONFIG.githubOwner + " can manage brand logos."
+            "Only " + CONFIG.githubOwner + " can manage brand templates."
         );
     }
 
@@ -1867,13 +1848,11 @@ function fileExtension(file) {
 
     if (ext === ".jpeg") ext = ".jpg";
 
-    if (!/^\.(png|jpg|webp|gif|svg)$/.test(ext)) {
+    if (!/^\.(png|jpg|webp)$/.test(ext)) {
         const byType = {
             "image/png": ".png",
             "image/jpeg": ".jpg",
-            "image/webp": ".webp",
-            "image/gif": ".gif",
-            "image/svg+xml": ".svg"
+            "image/webp": ".webp"
         };
         ext = byType[file.type] || "";
     }
@@ -1910,19 +1889,36 @@ S.upload.addEventListener("click", async function() {
     }
 
     if (!file) {
-        setStatus(S.uploadStatus, "Please choose a logo file.", "error");
+        setStatus(S.uploadStatus, "Please choose a template image.", "error");
         return;
     }
 
     const ext = fileExtension(file);
 
     if (!ext) {
-        setStatus(S.uploadStatus, "Logo must be PNG, JPG, WEBP, GIF or SVG.", "error");
+        setStatus(S.uploadStatus, "Template must be JPG, PNG or WEBP.", "error");
         return;
     }
 
-    if (file.size > CONFIG.maxLogoBytes) {
-        setStatus(S.uploadStatus, "Logo is too large (max 2 MB).", "error");
+    if (file.size > CONFIG.maxTemplateBytes) {
+        setStatus(S.uploadStatus, "Template is too large (max 5 MB).", "error");
+        return;
+    }
+
+    // Templates should be square (1500 x 1500) - warn if not
+    try {
+        const check = await decodeBlob(file);
+        const size = sizeOf(check);
+        if (check.close) check.close();
+        if (size.w !== size.h &&
+            !confirm("This image is " + size.w + " x " + size.h + " px, not square.\n" +
+                "It will be stretched to " + CONFIG.template.width + " x " + CONFIG.template.height +
+                ".\n\nUpload anyway?")) {
+            setStatus(S.uploadStatus, "Upload cancelled.");
+            return;
+        }
+    } catch (e) {
+        setStatus(S.uploadStatus, "This file is not a readable image.", "error");
         return;
     }
 
@@ -1937,7 +1933,7 @@ S.upload.addEventListener("click", async function() {
 
     try {
 
-        setStatus(S.uploadStatus, "Checking existing logos...");
+        setStatus(S.uploadStatus, "Checking existing templates...");
 
         // Always use the latest list so we have the right file versions
         await loadBrands(true);
@@ -1951,7 +1947,7 @@ S.upload.addEventListener("click", async function() {
         });
 
         if (existing.length &&
-            !confirm("A logo for \"" + existing[0].name + "\" already exists.\n\nReplace it?")) {
+            !confirm("A template for \"" + existing[0].name + "\" already exists.\n\nReplace it?")) {
             setStatus(S.uploadStatus, "Upload cancelled.");
             return;
         }
@@ -1961,7 +1957,7 @@ S.upload.addEventListener("click", async function() {
         setStatus(S.uploadStatus, "Uploading to GitHub...");
 
         const body = {
-            message: (sameFile ? "Update" : "Add") + " brand logo: " + name,
+            message: (sameFile ? "Update" : "Add") + " brand template: " + name,
             content: await fileToBase64(file)
         };
 
@@ -1982,7 +1978,7 @@ S.upload.addEventListener("click", async function() {
         // Remove old copies with a different extension or capitals
         for (const old of existing) {
             if (old.path !== path) {
-                await githubDelete(old.path, old.sha, "Replace brand logo: " + old.fileName);
+                await githubDelete(old.path, old.sha, "Replace brand template: " + old.fileName);
             }
         }
 
@@ -2000,7 +1996,7 @@ S.upload.addEventListener("click", async function() {
             showPreview();
         }
 
-        setStatus(S.uploadStatus, "✅ " + name + " logo uploaded.", "ok");
+        setStatus(S.uploadStatus, "✅ " + name + " template uploaded.", "ok");
 
     } catch (e) {
         console.error(e);
@@ -2017,7 +2013,7 @@ async function deleteBrand(brand) {
         return;
     }
 
-    if (!confirm("Delete the " + brand.name + " logo?\n\n" +
+    if (!confirm("Delete the " + brand.name + " template?\n\n" +
         brand.fileName + " will be removed from GitHub.")) {
         return;
     }
@@ -2026,12 +2022,12 @@ async function deleteBrand(brand) {
 
         setStatus(S.uploadStatus, "Deleting " + brand.fileName + "...");
 
-        await githubDelete(brand.path, brand.sha, "Delete brand logo: " + brand.fileName);
+        await githubDelete(brand.path, brand.sha, "Delete brand template: " + brand.fileName);
 
         clearBrandCache();
         await loadBrands(true);
 
-        setStatus(S.uploadStatus, "🗑 " + brand.name + " logo deleted.", "ok");
+        setStatus(S.uploadStatus, "🗑 " + brand.name + " template deleted.", "ok");
 
     } catch (e) {
         console.error(e);

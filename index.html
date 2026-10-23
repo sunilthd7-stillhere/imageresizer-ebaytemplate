@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-<link rel="icon" type="image/x-icon" href="favicon.ico.png">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -28,7 +28,7 @@
     <div class="tabs">
         <button class="tabButton active" data-tab="resizeTab">Resize Image</button>
         <button class="tabButton" data-tab="ebayTab">eBay Image Template</button>
-        <button class="tabButton" data-tab="settingsTab">Brand Logos</button>
+        <button class="tabButton" data-tab="settingsTab">Brand Templates</button>
     </div>
 
 
@@ -104,12 +104,12 @@
         <h2>eBay Image Template</h2>
 
         <p>
-            Paste product image URLs below. Each image will be placed inside the
-            selected brand template.
+            Choose a brand template, then paste product image URLs.
+            Each image is placed inside the template between the header and footer.
         </p>
 
         <div class="brandSelector">
-            <label for="brandSelect">Brand</label>
+            <label for="brandSelect">Brand Template</label>
             <select id="brandSelect">
                 <option value="">Loading brands...</option>
             </select>
@@ -144,7 +144,7 @@ https://example.com/image3.jpg"></textarea>
 
             <div class="optionBox">
                 <label>Product Area</label>
-                <div class="dimensionText">1122 × 1122 px</div>
+                <div class="dimensionText">1100 × 1100 px</div>
             </div>
 
             <div class="optionBox">
@@ -217,10 +217,12 @@ https://example.com/image3.jpg"></textarea>
 
     <div id="settingsTab" class="tabContent">
 
-        <h2>Brand Logos</h2>
+        <h2>Brand Templates</h2>
 
         <p>
-            These logos are used by the eBay Image Template.
+            Full 1500 × 1500 px templates with the brand logo, header and footer.
+            Keep the middle area (about 1100 × 1100 px, from 225 px down to 1325 px)
+            empty - that is where the product image goes.
         </p>
 
         <div class="settingsToolbar">
@@ -240,7 +242,7 @@ https://example.com/image3.jpg"></textarea>
             <div id="ownerLoggedOut">
 
                 <p class="smallText">
-                    Only the repository owner can add or delete logos.
+                    Only the repository owner can add or delete templates.
                     Paste your GitHub fine-grained token for this repository.
                     The token stays in this browser only and is checked with GitHub.
                 </p>
@@ -273,7 +275,7 @@ https://example.com/image3.jpg"></textarea>
                     <button id="ownerLogoutBtn" class="greyBtn">Lock</button>
                 </div>
 
-                <h3>Add or replace a logo</h3>
+                <h3>Add or replace a brand template</h3>
 
                 <div class="formRow">
                     <label for="brandName">Brand name</label>
@@ -281,9 +283,9 @@ https://example.com/image3.jpg"></textarea>
                 </div>
 
                 <div class="formRow">
-                    <label for="brandFile">Logo file (PNG, JPG, WEBP or SVG, max 2 MB)</label>
+                    <label for="brandFile">Template image (1500 × 1500 px JPG or PNG, max 5 MB)</label>
                     <input type="file" id="brandFile"
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif">
+                        accept="image/png,image/jpeg,image/webp">
                 </div>
 
                 <img id="brandFilePreview" class="brandFilePreview" alt="" hidden>

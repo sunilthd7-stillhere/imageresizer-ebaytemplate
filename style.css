@@ -455,7 +455,7 @@ input[type=checkbox] {
 }
 
 .brandCard .logoBox {
-    height: 90px;
+    aspect-ratio: 1 / 1;
     background: #fff;
     border: 1px solid #eee;
     border-radius: 6px;
@@ -532,8 +532,8 @@ input[type=checkbox] {
 
 .brandFilePreview {
     display: block;
-    max-width: 300px;
-    max-height: 100px;
+    max-width: 250px;
+    max-height: 250px;
     border: 1px solid #eee;
     border-radius: 6px;
     padding: 6px;
